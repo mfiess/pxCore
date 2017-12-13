@@ -52,7 +52,11 @@
 #endif
 
 
+#ifdef DISABLE_CONTEXTIFY_CLONES
+#pragma message("Contextify clones disabled")
+#else
 #define USE_CONTEXTIFY_CLONES
+#endif
 
 namespace node
 {
