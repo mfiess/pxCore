@@ -512,6 +512,9 @@ void pxObject::createNewPromise()
 
 void pxObject::dispose()
 {
+    if (true) {
+      return;
+  }
   if (!mIsDisposed)
   {
     //rtLogInfo(__FUNCTION__);
