@@ -1,5 +1,21 @@
-// pxCore CopyRight 2005-2006 John Robinson
-// Portable Framebuffer and Windowing Library
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 // pxWindowNative.cpp
 
 #include "../pxCore.h"
@@ -280,22 +296,6 @@ static void shell_surface_configure(void *data, struct wl_shell_surface *shell_s
     }
 }
 
-static void shellSurfaceConfigure(void *data,
-    struct wl_shell_surface *shell_surface,
-    uint32_t edges, int32_t width, int32_t height) { }
-
-static void shellSurfacePing(void *data,
-    struct wl_shell_surface *shell_surface, uint32_t serial)
-{
-    wl_shell_surface_pong(shell_surface, serial);
-}
-
-static const struct wl_shell_surface_listener shell_surface_listener =
-{
-    .ping = shellSurfacePing,
-    .configure = shellSurfaceConfigure,
-};
-
 static void
 buffer_release(void *data, struct wl_buffer *buffer)
 {
@@ -490,12 +490,12 @@ int pxWindowNative::createAndStartEventLoopTimer(int timeoutInMilliseconds )
     struct itimerspec       its;
     struct sigaction        sa;
     int                     sigNo = SIGRTMIN;
-    
+
     if (mEventLoopTimerStarted)
     {
         stopAndDeleteEventLoopTimer();
     }
-    
+
     displayRef dRef;
     waylandDisplay* wDisplay = dRef.getDisplay();
 
@@ -514,12 +514,12 @@ int pxWindowNative::createAndStartEventLoopTimer(int timeoutInMilliseconds )
     te.sigev_signo = sigNo;
     te.sigev_value.sival_ptr = wDisplay;
     timer_create(CLOCK_REALTIME, &te, &mRenderTimerId);
-    
+
     its.it_value.tv_sec = 0;
     its.it_value.tv_nsec = timeoutInMilliseconds * 1000000;
     its.it_interval = its.it_value;
     timer_settime(mRenderTimerId, 0, &its, NULL);
-    
+
     mEventLoopTimerStarted = true;
 
     return(0);
@@ -666,6 +666,7 @@ struct wl_shell_surface* pxWindowNative::createWaylandSurface()
     assert(ret == EGL_TRUE);
 
     eglSwapInterval(display->egl.dpy, 0);
+    eglSurfaceAttrib(display->egl.dpy, mEglSurface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED);
 
     return shell_surface;
 }
@@ -872,8 +873,8 @@ void pxWindowNative::drawFrame()
     pxSurfaceNativeDesc d;
     d.windowWidth = mLastWidth;
     d.windowHeight = mLastHeight;
-    waylandBuffer *buffer = nextBuffer();
-    d.pixelData = (uint32_t*)buffer->shm_data;
+    //waylandBuffer *buffer = nextBuffer();
+    //d.pixelData = (uint32_t*)buffer->shm_data;
 
 
     onDraw(&d);

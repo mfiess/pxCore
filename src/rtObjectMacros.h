@@ -1,6 +1,6 @@
 /*
 
- rtCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -512,7 +512,7 @@ int class::rtPropertyCount = sizeof(class::rtPropertyEntries)/sizeof(rtPropertyE
     virtual void* dontStrip##method() { return (void*)&method##EntryInstance; }
 
 #define  rtMethod3ArgAndReturn(name, method, arg1type, arg2type, arg3type, returntype) \
-    rtThunk3ArgAndReturn(method, arg1type, arg2type, returntype); \
+    rtThunk3ArgAndReturn(method, arg1type, arg2type, arg3type, returntype); \
     class method##Entry \
     { \
     public: \

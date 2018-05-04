@@ -1,3 +1,21 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 #include "rtRemoteIResolver.h"
 #include <condition_variable>
 #include <map>
@@ -10,6 +28,7 @@
 #include <rtObject.h>
 
 #include "rtRemoteCorrelationKey.h"
+#include "rtRemoteEndPoint.h"
 #include "rtRemoteTypes.h"
 #include "rtRemoteSocketUtils.h"
 
@@ -65,8 +84,7 @@ private:
   std::mutex        m_mutex;
   pid_t             m_pid;
   CommandHandlerMap m_command_handlers;
-  std::string       m_rpc_addr;
-  uint16_t          m_rpc_port;
+  rtRemoteEndPointPtr m_rpc_endpoint;
   HostedObjectsMap  m_hosted_objects;
   RequestMap	      m_pending_searches;
   int		            m_shutdown_pipe[2];

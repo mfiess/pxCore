@@ -1,7 +1,7 @@
 
 /*
 
- pxCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -299,8 +299,9 @@ rtError rtValue::getBool(bool& v) const
     case RT_doubleType:   v = (mValue.doubleValue==0.0) ? false:true; break;
     case RT_stringType:
     {
-      if (mValue.stringValue)
-        v = (*mValue.stringValue=="")?false:true; break;
+      if (mValue.stringValue) {
+        v = (*mValue.stringValue=="")?false:true;
+      }
     }
     break;
     case RT_objectType: v = mValue.objectValue?     true:false; break;

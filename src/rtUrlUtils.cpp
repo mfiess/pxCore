@@ -1,6 +1,6 @@
 /*
 
- pxCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ rtString rtUrlGetOrigin(const char* url)
       {
         u += 2;
         for (; *u && *u != '/' && *u != '?' && *u != '#'; u++);
-        uint32_t byteLen = u - url;
+        uint32_t byteLen = (uint32_t) (u - url);
         return rtString(url, byteLen);
       }
     }

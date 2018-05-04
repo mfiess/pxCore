@@ -1,18 +1,21 @@
 /*
- * Copyright [2017] [Comcast, Corp.]
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 #include "rtRemote.h"
 #include <thread>
 #include <unistd.h>
@@ -102,6 +105,7 @@ int main(int /*argc*/, char* /*argv*/ [])
 
   // std::thread t(run);
 
+  int n = 10;
   while (true)
   {
     rtValue val;
@@ -111,12 +115,16 @@ int main(int /*argc*/, char* /*argv*/ [])
     rtLogInfo("Type:%s", val.getTypeStr());
     rtLogInfo("Addr:%p", val.toFunction().getPtr());
     #endif
-    e = obj->Get("bigprop", &val);
+    e = obj->Get("prop", &val);
     rtLogInfo("get  :%s", rtStrError(e));
     rtLogInfo("type :%s", val.getTypeStr());
-    rtLogInfo("addr :%p", val.toObject().getPtr());
+    rtLogInfo("value:%d", val.toInt32());
     rtRemoteRunUntil(env, 1000);
     sleep(1);
+
+    rtValue temp(n);
+    obj->Set("prop", &temp);
+    n++;
   }
   return 0;
 }

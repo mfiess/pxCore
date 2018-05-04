@@ -1,3 +1,21 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 #include <sstream>
 
 #define private public
@@ -45,22 +63,27 @@ class sceneWindow : public pxWindow, public pxIViewContainer
       UNUSED_PARAM(url);
       pxWindow::init(x,y,w,h);
     }
-  
+
     virtual void invalidateRect(pxRect* r)
     {
       UNUSED_PARAM(r);
     }
-    
+
+    virtual void* RT_STDCALL getInterface(const char* /*t*/)
+    {
+      return NULL;
+    }
+
     rtError setView(pxIView* v)
-    { 
+    {
       UNUSED_PARAM(v);
       return RT_OK;
     }
-    
+
     virtual void onAnimationTimer()
     {
     }
-    
+
 };
 
 class pxContextTest : public testing::Test
@@ -171,7 +194,7 @@ class pxContextTest : public testing::Test
       char *buffer = new char[100*100];
       pxTextureRef alphaTexture = mContext.createTexture(100,100,100,100,buffer);
       EXPECT_TRUE (mContext.textureMemoryOverflow(alphaTexture) == 0);
-      delete buffer;
+      delete[] buffer;
     }
 
     void textureMemoryOverflowFalseTest()
@@ -182,7 +205,7 @@ class pxContextTest : public testing::Test
       pxTextureRef alphaTexture = mContext.createTexture(100,100,100,100,buffer);
       EXPECT_TRUE (mContext.textureMemoryOverflow(alphaTexture) > 0);
       mContext.setTextureMemoryLimit(oldLimit);
-      delete buffer;
+      delete[] buffer;
     }
 
     void adjustCurrentTextureMemorySizeTest()
@@ -365,23 +388,23 @@ class pxFBOTextureTest : public testing::Test
       EXPECT_TRUE(mFramebuffer->getTexture()->width() == 1280);
       EXPECT_TRUE(mFramebuffer->getTexture()->height() == 720);
     }
-    
+
     void getNativeIdTest()
     {
       EXPECT_TRUE (PX_OK == mContext.updateFramebuffer(mFramebuffer,1280,720));
       EXPECT_TRUE(mFramebuffer->getTexture()->getNativeId() != 0);
     }
-    
+
     void bindGLTextureTest()
     {
-      EXPECT_TRUE(mFramebuffer->getTexture()->bindGLTexture(0) == PX_OK);    
+      EXPECT_TRUE(mFramebuffer->getTexture()->bindGLTexture(0) == PX_OK);
     }
-    
+
     void bindGLTextureAsMaskSuccessTest()
     {
       EXPECT_TRUE(mFramebuffer->getTexture()->bindGLTextureAsMask(0) == PX_OK);
     }
-    
+
     private:
       pxContext mContext;
       pxContextFramebufferRef mFramebuffer;
@@ -465,4 +488,3 @@ TEST_F(pxAlphaTextureTest, pxAlphaTextureTests)
   bindGLTextureAsMaskUninitTest();
   bindGLTextureAsMaskTest();
 }
-

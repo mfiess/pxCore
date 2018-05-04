@@ -1,3 +1,21 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 #include "rtRemoteSocketUtils.h"
 
 #include <cstdio>
@@ -296,7 +314,7 @@ rtSocketToString(sockaddr_storage const& ss)
   memset(addrBuff, 0, sizeof(addrBuff));
   if (ss.ss_family == AF_UNIX)
   {
-    strncpy(addrBuff, (const char*)addr, sizeof(addrBuff) -1);
+    strncpy(addrBuff, reinterpret_cast<char const *>(addr), sizeof(addrBuff) -1);
     port = 0;
   }
   else
@@ -422,7 +440,7 @@ rtReadMessage(int fd, rtRemoteSocketBuffer& buff, rtRemoteMessagePtr& doc)
     rtLogError("failed to read payload message of length %d from socket", n);
     return err;
   }
-    
+
   #ifdef RT_RPC_DEBUG
   rtLogDebug("read (%d):\n***IN***\t\"%.*s\"\n", static_cast<int>(buff.size()), static_cast<int>(buff.size()), &buff[0]);
   #endif
@@ -457,7 +475,7 @@ rtParseMessage(char const* buff, int n, rtRemoteMessagePtr& doc)
 
     return RT_FAIL;
   }
-  
+
   return RT_OK;
 }
 
@@ -540,15 +558,13 @@ rtGetDefaultInterface(sockaddr_storage& addr, uint16_t port)
 rtError
 rtCreateUnixSocketName(pid_t pid, char* buff, int n)
 {
-  const char* kUnixSocketTemplate = kUnixSocketTemplateRoot ".%d";
-
   if (!buff)
     return RT_ERROR_INVALID_ARG;
 
   if (pid == 0)
     pid = getpid();
 
-  int count = snprintf(buff, n, kUnixSocketTemplate, pid);
+  int count = snprintf(buff, n, "%s.%d", kUnixSocketTemplateRoot, pid);
   if (count >= n)
   {
     rtLogError("truncated socket path %d <= %d", n, count);

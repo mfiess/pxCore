@@ -1,3 +1,21 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 #include <list>
 #include <sstream>
 
@@ -103,8 +121,10 @@ class pxUtilTest : public testing::Test
       if (false == mDownloadImageFailed)
       {
         sysRet = system("rm -rf supportfiles/apngimage.png");
+        EXPECT_TRUE (sysRet == 0);
       }
       sysRet = system("rm -rf supportfiles/wrong.png supportfiles/generatedflower.png");
+      EXPECT_TRUE (sysRet == 0);
       mDownloadImageFailed = true;
     }
 
@@ -112,6 +132,7 @@ class pxUtilTest : public testing::Test
     {
       rtData d;
       rtError loadImageSuccess = rtLoadFile("supportfiles/status_bg.png", d);
+      EXPECT_TRUE (loadImageSuccess == RT_OK);
       rtError ret = pxLoadImage((const char*) d.data(), d.length(), mPngData);
       EXPECT_TRUE (ret == RT_OK);
     }
@@ -229,6 +250,7 @@ class pxUtilTest : public testing::Test
     {
       rtData d;
       rtError loadImageSuccess = rtLoadFile("supportfiles/status_bg.png", d);
+      EXPECT_TRUE (loadImageSuccess == RT_OK);
       failPngCreateReadStruct = true;
       rtError ret = pxLoadPNGImage((const char*)d.data(), d.length(), mPngData);
       failPngCreateReadStruct = false;
@@ -273,6 +295,7 @@ class pxUtilTest : public testing::Test
       {
         rtData d;
         rtError loadImageSuccess = rtLoadFile("supportfiles/apngimage.png", d);
+        EXPECT_TRUE (loadImageSuccess == RT_OK);
         rtError ret = pxLoadAImage((const char*) d.data(), d.length(), mAnimatedPngData);
         EXPECT_TRUE (ret == RT_OK);
       }

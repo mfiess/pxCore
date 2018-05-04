@@ -1,3 +1,21 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 "use strict";
 
 var hasExtension = require('rcvrcore/utils/FileUtils').hasExtension;
@@ -214,12 +232,17 @@ XModule.prototype._importModule = function(requiredModuleSet, readyCallBack, fai
       } else {
         bPath = _this.name;
       }
-      var nmodules = _this.appSandbox.importTracking[bPath].length;
-      for (var modindex=0; modindex<nmodules; modindex++)
-      {
-        _this.appSandbox.importTracking[bPath].pop();
+
+      var imports = _this.appSandbox.importTracking[bPath];
+
+      if(imports !== undefined && imports !== null && imports.length !== undefined) {
+        var nmodules = _this.appSandbox.importTracking[bPath].length;
+        for (var modindex=0; modindex<nmodules; modindex++)
+        {
+          _this.appSandbox.importTracking[bPath].pop();
+        }
+        delete _this.appSandbox.importTracking[bPath];
       }
-      delete _this.appSandbox.importTracking[bPath];
 
       log.message(7, "XMODULE ABOUT TO NOTIFY [" + _this.name + "] that all its imports are Ready");
       if( readyCallBack !== null && readyCallBack !== undefined ) {

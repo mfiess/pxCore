@@ -1,3 +1,21 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 #include <sstream>
 
 #define private public
@@ -21,26 +39,26 @@ class rtErrorTest : public ::testing::TestWithParam<rtError>
   public:
     virtual void SetUp()
     {
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_OK, "RT_OK"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_FAIL, "RT_FAIL"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_NOT_ENOUGH_ARGS, "RT_ERROR_NOT_ENOUGH_ARGS"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_INVALID_ARG, "RT_ERROR_INVALID_ARG"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_PROP_NOT_FOUND, "RT_PROP_NOT_FOUND"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_OBJECT_NOT_INITIALIZED, "RT_OBJECT_NOT_INITIALIZED"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_PROPERTY_NOT_FOUND, "RT_PROPERTY_NOT_FOUND"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_OBJECT_NO_LONGER_AVAILABLE, "RT_OBJECT_NO_LONGER_AVAILABLE"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_RESOURCE_NOT_FOUND, "RT_RESOURCE_NOT_FOUND"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_NO_CONNECTION, "RT_NO_CONNECTION"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_NOT_IMPLEMENTED, "RT_ERROR_NOT_IMPLEMENTED"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_TYPE_MISMATCH, "RT_ERROR_TYPE_MISMATCH"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_TIMEOUT, "RT_ERROR_TIMEOUT"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_DUPLICATE_ENTRY, "RT_ERROR_DUPLICATE_ENTRY"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_OBJECT_NOT_FOUND, "RT_ERROR_OBJECT_NOT_FOUND"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_PROTOCOL_ERROR, "RT_ERROR_PROTOCOL_ERROR"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_INVALID_OPERATION, "RT_ERROR_INVALID_OPERATION"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_IN_PROGRESS, "RT_ERROR_IN_PROGRESS"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_QUEUE_EMPTY, "RT_ERROR_QUEUE_EMPTY"));
-      rtBuiltinErrors.insert (std::pair <int, char*> (RT_ERROR_STREAM_CLOSED, "RT_ERROR_STREAM_CLOSED"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_OK, "RT_OK"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_FAIL, "RT_FAIL"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_NOT_ENOUGH_ARGS, "RT_ERROR_NOT_ENOUGH_ARGS"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_INVALID_ARG, "RT_ERROR_INVALID_ARG"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_PROP_NOT_FOUND, "RT_PROP_NOT_FOUND"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_OBJECT_NOT_INITIALIZED, "RT_OBJECT_NOT_INITIALIZED"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_PROPERTY_NOT_FOUND, "RT_PROPERTY_NOT_FOUND"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_OBJECT_NO_LONGER_AVAILABLE, "RT_OBJECT_NO_LONGER_AVAILABLE"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_RESOURCE_NOT_FOUND, "RT_RESOURCE_NOT_FOUND"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_NO_CONNECTION, "RT_NO_CONNECTION"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_NOT_IMPLEMENTED, "RT_ERROR_NOT_IMPLEMENTED"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_TYPE_MISMATCH, "RT_ERROR_TYPE_MISMATCH"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_TIMEOUT, "RT_ERROR_TIMEOUT"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_DUPLICATE_ENTRY, "RT_ERROR_DUPLICATE_ENTRY"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_OBJECT_NOT_FOUND, "RT_ERROR_OBJECT_NOT_FOUND"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_PROTOCOL_ERROR, "RT_ERROR_PROTOCOL_ERROR"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_INVALID_OPERATION, "RT_ERROR_INVALID_OPERATION"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_IN_PROGRESS, "RT_ERROR_IN_PROGRESS"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_QUEUE_EMPTY, "RT_ERROR_QUEUE_EMPTY"));
+      rtBuiltinErrors.insert (std::pair <const int, const char*> (RT_ERROR_STREAM_CLOSED, "RT_ERROR_STREAM_CLOSED"));
     }
 
     virtual void TearDown()

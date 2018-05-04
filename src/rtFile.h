@@ -1,6 +1,6 @@
 /*
 
- rtCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -28,15 +28,15 @@
 /**
 rtData is a wrapper that encapsulated an allocated buffer of bytes and owns the lifetime of those bytes.
 */
-class rtData 
+class rtData
 {
  public:
   rtData();
   ~rtData();
 
   // TODO copy constructor and assignment
-  rtError init(uint32_t length);
-  rtError init(uint8_t* data, uint32_t length);
+  rtError init(size_t length);
+  rtError init(const uint8_t* data, size_t length);
 
   rtError term();
 

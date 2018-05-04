@@ -1,6 +1,6 @@
 /*
 
- pxCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -45,8 +45,9 @@ public:
   rtError borderBottom(float& v) const { v = mBorderBottom; return RT_OK; }
   rtError setBorderBottom(float v) { mBorderBottom = v; return RT_OK; }
 
-  rtError maskColor(uint32_t& /*c*/) const
+  rtError maskColor(uint32_t& c) const
   {
+    c = 0;
     rtLogWarn("maskColor get not available");
     return RT_OK;
   }

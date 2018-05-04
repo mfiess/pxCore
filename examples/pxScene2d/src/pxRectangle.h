@@ -1,6 +1,6 @@
 /*
 
- pxCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -41,10 +41,11 @@ public:
   }
 
   virtual void onInit() {mReady.send("resolve",this);}
-  
-  rtError fillColor(uint32_t& /*c*/) const 
+
+  rtError fillColor(uint32_t& c) const
   {
     // TODO
+    c = 0;
     rtLogWarn("fillColor not implemented");
     return RT_OK;
   }
@@ -58,9 +59,10 @@ public:
     return RT_OK;
   }
 
-  rtError lineColor(uint32_t& /*c*/) const 
+  rtError lineColor(uint32_t& c) const
   {
     // TODO
+    c = 0;
     rtLogWarn("lineColor not implemented");
     return RT_OK;
   }

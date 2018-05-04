@@ -1,6 +1,6 @@
 /*
 
- pxCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -276,12 +276,12 @@ rtError pxTransform::compile(const char*s)
         while(*s == '_' || isalnum(*s)) 
           s++;
         rtLogDebug("id: %.*s\n", (int)(s-id), id);
-        transformFunc func = getFunc(id,s-id);
+        transformFunc func = getFunc(id,(uint32_t) (s-id) );
         if (func)
           emitCallFunction(func);
         else
         {
-          uint32_t i = getReg(id, s-id);
+          uint32_t i = getReg(id, (uint32_t) (s-id) );
           if (i != INVALID_REG)
             emitPushRegister(i);
           else

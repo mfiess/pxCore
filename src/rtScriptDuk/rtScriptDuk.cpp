@@ -1,6 +1,6 @@
 /*
 
- rtCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ extern "C" {
 //#include "env.h"
 //#include "env-inl.h"
 
-#include "rtWrapperUtils.h"
+#include "rtWrapperUtilsDuk.h"
 #include "rtJsModules.h"
 
 #ifndef WIN32
@@ -117,8 +117,8 @@ extern "C" {
 #include "uv.h"
 #include "libplatform/libplatform.h"
 
-#include "rtObjectWrapper.h"
-#include "rtFunctionWrapper.h"
+#include "rtObjectWrapperDuk.h"
+#include "rtFunctionWrapperDuk.h"
 
 #define SANDBOX_IDENTIFIER  ( (const char*) "_sandboxStuff" )
 #define SANDBOX_JS          ( (const char*) "rcvrcore/sandbox.js")
@@ -142,7 +142,7 @@ public:
   rtDukContext(rtDukContextRef clone_me);
 #endif
 
-  ~rtDukContext();
+  virtual ~rtDukContext();
 
   rtError add(const char *name, rtValue  const& val);
   rtValue get(const char *name);
@@ -178,8 +178,8 @@ private:
 #endif
 
   int mRefCount;
-  rtAtomic mId;
   void* mContextifyContext;
+  rtAtomic mId;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -190,8 +190,7 @@ typedef std::map<uint32_t, rtDukContextRef> rtDukContexts;
 class rtScriptDuk: public rtIScript
 {
 public:
-  rtScriptDuk();
-  rtScriptDuk(bool initialize);
+  rtScriptDuk(bool initialize = true);
 
   virtual ~rtScriptDuk();
 
@@ -201,7 +200,7 @@ public:
     return rtAtomicInc(&mRefCount);
   }
 
-  unsigned long Release();  
+  unsigned long Release();
 
   rtError init();
 
@@ -282,8 +281,6 @@ extern bool use_inspector;
 extern bool debug_wait_connect;
 }
 
-static int exec_argc;
-static const char** exec_argv;
 static rtAtomic sNextId = 100;
 
 
@@ -327,7 +324,7 @@ static inline bool file_exists(const char *file)
 #endif
 
 rtDukContext::rtDukContext() :
-     js_file(NULL), mRefCount(0), mContextifyContext(NULL), dukCtx(NULL), uvLoop(NULL)
+     js_file(NULL), dukCtx(NULL), uvLoop(NULL), mRefCount(0), mContextifyContext(NULL)
 {
   mId = rtAtomicInc(&sNextId);
 
@@ -336,7 +333,7 @@ rtDukContext::rtDukContext() :
 
 #ifdef USE_CONTEXTIFY_CLONES
 rtDukContext::rtDukContext(rtDukContextRef clone_me) :
-      js_file(NULL), mRefCount(0), mContextifyContext(NULL), dukCtx(NULL), uvLoop(NULL)
+      js_file(NULL), dukCtx(NULL), uvLoop(NULL), mRefCount(0), mContextifyContext(NULL)
 {
   mId = rtAtomicInc(&sNextId);
 
@@ -355,9 +352,9 @@ void rtDukContext::clonedEnvironment(rtDukContextRef clone_me)
 {
   rtLogInfo(__FUNCTION__);
   duk_idx_t thr_idx = duk_push_thread(clone_me->dukCtx);
-  
+
   duk_dup(clone_me->dukCtx, -1);
-  rtDukPutIdentToGlobal(clone_me->dukCtx);
+  rtScriptDukUtils::rtDukPutIdentToGlobal(clone_me->dukCtx);
 
   dukCtx = duk_get_context(clone_me->dukCtx, thr_idx);
 
@@ -389,9 +386,9 @@ rtDukContext::~rtDukContext()
 
 rtError rtDukContext::add(const char *name, rtValue const& val)
 {
-  rt2duk(dukCtx, val);
-  rtDukPutIdentToGlobal(dukCtx, name);
-  
+  rtScriptDukUtils::rt2duk(dukCtx, val);
+  rtScriptDukUtils::rtDukPutIdentToGlobal(dukCtx, name);
+
   return RT_OK;
 }
 
@@ -642,7 +639,7 @@ static duk_ret_t duv_require(duk_context *ctx) {
 
   const duv_schema_entry schema[] = {
     { "id", duk_is_string },
-    { NULL }
+    { NULL, NULL }
   };
 
   dschema_check(ctx, schema);
@@ -739,7 +736,7 @@ static duk_ret_t duv_require(duk_context *ctx) {
 static duk_ret_t duv_mod_resolve(duk_context *ctx) {
   const duv_schema_entry schema[] = {
     { "id", duk_is_string },
-    { NULL }
+    { NULL, NULL }
   };
 
   dschema_check(ctx, schema);
@@ -756,7 +753,7 @@ static duk_ret_t duv_mod_load(duk_context *ctx) {
   const char* ext;
 
   const duv_schema_entry schema[] = {
-    { NULL }
+    { NULL, NULL }
   };
 
   dschema_check(ctx, schema);
@@ -806,7 +803,7 @@ static duk_ret_t duv_loadlib(duk_context *ctx) {
   const duv_schema_entry schema[] = {
     { "path", duk_is_string },
     { "name", duk_is_string },
-    { NULL }
+    { NULL, NULL }
   };
 
   dschema_check(ctx, schema);
@@ -832,7 +829,7 @@ static duk_ret_t duv_mod_compile(duk_context *ctx) {
   // Check the args
   const duv_schema_entry schema[] = {
     { "code", dschema_is_data },
-    { NULL }
+    { NULL, NULL }
   };
 
   dschema_check(ctx, schema);
@@ -1024,11 +1021,11 @@ rtError rtDukContext::runFile(const char *file, rtValue* retVal /*= NULL*/, cons
   // Read the script file
   js_file   = file;
   js_script = readFile(file);
-  
+
   if( js_script.empty() ) // load error
   {
     rtLogError(" %s  ... load error / not found.",__PRETTY_FUNCTION__);
-     
+
     return RT_FAIL;
   }
 
@@ -1037,31 +1034,17 @@ rtError rtDukContext::runFile(const char *file, rtValue* retVal /*= NULL*/, cons
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-rtScriptDuk::rtScriptDuk():mRefCount(0), duk_is_initialized(false)
-#ifndef RUNINMAIN
+rtScriptDuk::rtScriptDuk(bool initialize): dukCtx(NULL), duk_is_initialized(false),
 #ifdef USE_CONTEXTIFY_CLONES
-: mRefContext(), mNeedsToEnd(false), duk_is_initialized(false)
-#else
-: mNeedsToEnd(false)
+  mRefContext(),
 #endif
+  mTestGc(false),
+#ifndef RUNINMAIN
+  mNeedsToEnd(false),
 #endif
+  mRefCount(0)
 {
   rtLogInfo(__FUNCTION__);
-  mTestGc = false;
-  init();
-}
-
-rtScriptDuk::rtScriptDuk(bool initialize):mRefCount(0), duk_is_initialized(false)
-#ifndef RUNINMAIN
-#ifdef USE_CONTEXTIFY_CLONES
-: mRefContext(), mNeedsToEnd(false), duk_is_initialized(false)
-#else
-: mNeedsToEnd(false)
-#endif
-#endif
-{
-  rtLogInfo(__FUNCTION__);
-  mTestGc = false;
   if (true == initialize)
   {
     init();
@@ -1262,7 +1245,7 @@ void rtScriptDuk::init2(int argc, char** argv)
       duk_pop(dukCtx);
     }
 
-    rtSetupJsModuleBindings(dukCtx);
+    rtScriptDukUtils::rtSetupJsModuleBindings(dukCtx);
   }
 }
 

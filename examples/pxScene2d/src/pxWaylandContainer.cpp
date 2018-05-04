@@ -1,6 +1,6 @@
 /*
 
- pxCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -63,10 +63,10 @@ pxWaylandContainer::~pxWaylandContainer()
   mWayland = NULL;
 }
 
-void pxWaylandContainer::dispose()
+void pxWaylandContainer::dispose(bool pumpJavascript)
 {
    setView(NULL);
-   pxObject::dispose();
+   pxObject::dispose(pumpJavascript);
 }
 
 void pxWaylandContainer::invalidate( pxRect* r )
@@ -164,7 +164,7 @@ rtError pxWaylandContainer::setDisplayName(const char* s)
 
 rtError pxWaylandContainer::setCmd(const char* s)
 {
-  int regcmdlen;
+  size_t regcmdlen;
   const char *regcmd;
   const char *p= strpbrk( s, " ");
   std::map<string, string>::iterator it= gWaylandAppsMap.end();
@@ -186,7 +186,7 @@ rtError pxWaylandContainer::setCmd(const char* s)
       }
       if ( regcmdlen > 0 )
       {
-         binary = rtString(regcmd, regcmdlen);
+         binary = rtString(regcmd, (uint32_t) regcmdlen);
       }
     }
   }
@@ -209,7 +209,7 @@ rtError pxWaylandContainer::setCmd(const char* s)
                (regcmdlen > 1) &&
                (regcmd[regcmdlen-1] == '%'))
           {
-             binary = rtString(regcmd, regcmdlen-1);
+             binary = rtString(regcmd, (uint32_t) (regcmdlen-1) );
              binary.append( args );
           }
        }

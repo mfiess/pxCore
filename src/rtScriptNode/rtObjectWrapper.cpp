@@ -1,3 +1,21 @@
+/*
+
+pxCore Copyright 2005-2018 John Robinson
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+*/
+
 #include "rtObjectWrapper.h"
 #include "rtFunctionWrapper.h"
 #include "rtWrapperUtils.h"
@@ -389,7 +407,11 @@ rtError jsObjectWrapper::getAllKeys(Isolate* isolate, rtValue* value) const
 
 rtError jsObjectWrapper::Get(const char* name, rtValue* value) const
 {
+  Locker locker(mIsolate);
+  Isolate::Scope   isolate_scope(mIsolate);
   HandleScope handle_scope(mIsolate);
+
+  
 
   if (!name)
     return RT_ERROR_INVALID_ARG;
@@ -443,6 +465,7 @@ rtError jsObjectWrapper::Get(uint32_t i, rtValue* value) const
     return RT_ERROR_INVALID_ARG;
 
   Locker locker(mIsolate);
+  Isolate::Scope   isolate_scope(mIsolate);
   HandleScope handleScope(mIsolate);
 
   Local<Object> self = PersistentToLocal(mIsolate, mObject);
@@ -470,6 +493,7 @@ rtError jsObjectWrapper::Set(const char* name, const rtValue* value)
     return RT_ERROR_INVALID_ARG;
 
   Locker locker(mIsolate);
+  Isolate::Scope   isolate_scope(mIsolate);
   HandleScope handleScope(mIsolate);
   Local<String> s = String::NewFromUtf8(mIsolate, name);
   Local<Object> self = PersistentToLocal(mIsolate, mObject);
@@ -503,6 +527,7 @@ rtError jsObjectWrapper::Set(uint32_t i, const rtValue* value)
     return RT_ERROR_INVALID_ARG;
 
   Locker locker(mIsolate);
+  Isolate::Scope   isolate_scope(mIsolate);
   HandleScope handleScope(mIsolate);
   Local<Object> self = PersistentToLocal(mIsolate, mObject);
   Local<Context> ctx = self->CreationContext();

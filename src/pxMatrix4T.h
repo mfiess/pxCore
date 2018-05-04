@@ -1,6 +1,6 @@
 /*
 
- pxCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -66,7 +66,10 @@ public:
   {
     mX = x; mY = y, mZ = z; mW = w;
   }
-  
+
+  inline void setXY( FloatT x, FloatT y) { mX = x; mY = y; }
+  inline void setXYZ(FloatT x, FloatT y, FloatT z) { mX = x; mY = y; mZ = z; }
+
   inline void setX(FloatT x) { mX = x; }
   inline void setY(FloatT y) { mY = y; }
   inline void setZ(FloatT z) { mZ = z; }

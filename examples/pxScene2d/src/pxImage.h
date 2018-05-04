@@ -1,6 +1,6 @@
 /*
 
- pxCore Copyright 2005-2017 John Robinson
+ pxCore Copyright 2005-2018 John Robinson
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -72,9 +72,10 @@ public:
   // !CLF: To Do: These names are terrible... find better ones!
   virtual float getOnscreenWidth();
   virtual float getOnscreenHeight();
-  virtual void dispose();
+  virtual void dispose(bool pumpJavascript);
   void checkStretchX();
   void checkStretchY();
+  rtError removeResourceListener();
   
 protected:
   virtual void draw();
