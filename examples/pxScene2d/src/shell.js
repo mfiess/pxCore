@@ -100,6 +100,8 @@ if (false)
     });
   }
 }
+
+var isSuspended = false;
 ////
   scene.root.on("onPreKeyDown", function(e) {
     var code  = e.keyCode;
@@ -118,8 +120,20 @@ if (false)
       {
 //        console.log("SHELL: onPreKeyDown: FPS !!!  ############# ");
 
-        showFPS = !showFPS;
-        fpsBg.a = (showFPS)?1.0:0;
+
+
+  console.log("shell key code pressed: " + code);
+  {
+  console.log("suspending easter egg");
+        if (isSuspended) {
+          scene.resume({});
+        } else {
+          scene.suspend({});
+        }
+        isSuspended = !isSuspended;
+  }
+        //showFPS = !showFPS;
+        //fpsBg.a = (showFPS)?1.0:0;
         e.stopPropagation();
       }
       else
