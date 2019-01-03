@@ -9,6 +9,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
+#include "rtThreadUtils.h"
 
 #if 1
 @interface AppDelegate : NSObject <NSApplicationDelegate>
@@ -282,6 +283,7 @@ void pxEventLoop::exit()
 
 int main(int argc, char* argv[])
 {
+    rtThreadUtilsInit();
     pxMain(argc,argv);
     return 0;
 }

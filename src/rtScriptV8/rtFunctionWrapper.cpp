@@ -19,6 +19,7 @@ limitations under the License.
 #include "rtFunctionWrapper.h"
 #include "rtWrapperUtils.h"
 #include "jsCallback.h"
+#include "../rtThreadUtils.h"
 
 #include <vector>
 #ifdef RUNINMAIN
@@ -425,7 +426,7 @@ rtError jsFunctionWrapper::Send(int numArgs, const rtValue* args, rtValue* resul
 
   if (result) // wants result run synchronously
   {
-    if (rtIsMainThreadNode()) // main thread run now
+    if (rtIsMainThread()) // main thread run now
     {
       *result = callback->run();
       delete callback;

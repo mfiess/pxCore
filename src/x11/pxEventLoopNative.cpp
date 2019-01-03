@@ -37,6 +37,7 @@ limitations under the License.
 #else
   #include "pxWindowNative.h"
 #endif
+#include "../rtThreadUtils.h"
 
 void pxEventLoop::run()
 {
@@ -61,6 +62,7 @@ void pxEventLoop::exit()
 #ifndef ENABLE_DFB_GENERIC
 int main(int argc, char* argv[])
 {
+  rtThreadUtilsInit();
   return pxMain(argc, argv);
 }
 #endif
