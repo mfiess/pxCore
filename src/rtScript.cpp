@@ -51,6 +51,7 @@ static std::thread::id sCurrentSceneThread;
 static pthread_mutex_t sSceneLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 static pthread_t sCurrentSceneThread;
 #ifndef RUNINMAIN
+extern uv_mutex_t threadMutex;
 static pthread_mutex_t sObjectMapMutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
 #endif //!RUNINMAIN
 #endif

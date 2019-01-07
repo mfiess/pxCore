@@ -76,8 +76,10 @@
 #define EXITSCENELOCK() 
 #else
 #define ENTERSCENELOCK() rtWrapperSceneUpdateEnter();
-#define EXITSCENELOCK() rtWrapperSceneUpdateExit(); 
+#define EXITSCENELOCK() rtWrapperSceneUpdateExit();
+#include "uv.h"
 class pxScriptView;
+void processNewScript(uv_async_t *handle);
 class AsyncScriptInfo {
   public:
     pxScriptView * m_pView;

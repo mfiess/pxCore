@@ -202,12 +202,12 @@ public:
   rtNodeContextRef getGlobalContext() const;
   rtNodeContextRef createContext(bool ownThread = false);
   rtError createContext(const char *lang, rtScriptContextRef& ctx);
-#if 0
 #ifndef RUNINMAIN
-  bool isInitialized();
+  void collectGarbageThreadSafe();
+  void terminate(uv_work_t *req, int status);
+  void start(uv_work_t *req);
   bool needsToEnd() { /*rtLogDebug("needsToEnd returning %d\n",mNeedsToEnd);*/ return mNeedsToEnd;};
   void setNeedsToEnd(bool end) { /*rtLogDebug("needsToEnd being set to %d\n",end);*/ mNeedsToEnd = end;}
-#endif
 #endif
 
   v8::Isolate   *getIsolate() { return mIsolate; };
@@ -248,6 +248,7 @@ private:
 #endif
 
   int mRefCount;
+  bool mInitialized;
 };
 
 
@@ -934,14 +935,11 @@ rtError rtNodeContext::runFile(const char *file, rtValue* retVal /*= NULL*/, con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-rtScriptNode::rtScriptNode():mRefCount(0)
-#ifndef RUNINMAIN
+rtScriptNode::rtScriptNode():
 #ifdef USE_CONTEXTIFY_CLONES
-: mRefContext(), mNeedsToEnd(false)
-#else
-: mNeedsToEnd(false)
-#endif
-#endif
+mRefContext(),
+#endif //USE_CONTEXTIFY_CLONES
+mRefCount(0), mInitialized(false)
 {
   rtLogInfo(__FUNCTION__);
   mTestGc = false;
@@ -950,14 +948,11 @@ rtScriptNode::rtScriptNode():mRefCount(0)
   init();
 }
 
-rtScriptNode::rtScriptNode(bool initialize):mRefCount(0)
-#ifndef RUNINMAIN
+rtScriptNode::rtScriptNode(bool initialize):
 #ifdef USE_CONTEXTIFY_CLONES
-: mRefContext(), mNeedsToEnd(false)
-#else
-: mNeedsToEnd(false)
-#endif
-#endif
+mRefContext(),
+#endif //USE_CONTEXTIFY_CLONES
+mRefCount(0), mInitialized(false)
 {
   rtLogInfo(__FUNCTION__);
   mTestGc = false;
@@ -1052,6 +1047,7 @@ rtError rtScriptNode::init()
   init2(argc, argv);
 #endif
 #endif // ENABLE_NODE_V_6_9
+  mInitialized = true;
   return RT_OK;
 }
 
@@ -1158,11 +1154,54 @@ void rtScriptNode::nodePath()
   }
 }
 #ifndef RUNINMAIN
-bool rtNode::isInitialized()
+#include "pxTimer.h"
+uv_loop_t *scriptLoop = uv_default_loop();
+uv_async_t gcTrigger;
+uv_mutex_t threadMutex;
+bool gScriptThreadIsRunning = false;
+void rtScriptNode::collectGarbageThreadSafe()
 {
-  //rtLogDebug("rtNode::isInitialized returning %d\n",node_is_initialized);
-  return node_is_initialized;
+  rtLogInfo(__FUNCTION__);
+
+  uv_mutex_lock(&threadMutex);
+  collectGarbage();
+  uv_mutex_unlock(&threadMutex);
 }
+
+void rtScriptNode::terminate(uv_work_t *req, int status)
+{
+  rtLogWarn("terminate");
+  uv_mutex_lock(&threadMutex);
+  pump();
+  uv_mutex_unlock(&threadMutex);
+}
+
+void rtScriptNode::start(uv_work_t *req)
+{
+  rtLogInfo(__FUNCTION__);
+  init();
+
+  gScriptThreadIsRunning = true;
+
+  while(!gScriptThreadIsRunning) {
+
+    if(mInitialized)
+    {
+      uv_mutex_lock(&threadMutex);
+      v8::Locker locker(getIsolate());
+      v8::Isolate::Scope isolate_scope(getIsolate());
+      v8::HandleScope handle_scope(getIsolate());
+      uv_run(nodeLoop, UV_RUN_NOWAIT);
+      uv_mutex_unlock(&threadMutex);
+    }
+    pxSleepMS(50);
+  }
+  printf("nodeThread is terminating\n");
+
+  terminate(NULL,0 );
+
+}
+
 #endif
 
 #if 1

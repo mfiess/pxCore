@@ -131,11 +131,41 @@ extern void rtWrapperSceneUpdateExit();
 #ifdef RUNINMAIN
 rtScript script;
 #else
-class AsyncScriptInfo;
-extern vector<AsyncScriptInfo*> scriptsInfo;
-extern uv_mutex_t moreScriptsMutex;
-extern uv_async_t asyncNewScript;
-extern uv_async_t gcTrigger;
+#include "uv.h"
+#include "v8.h"
+//mfnote: todo - better rename the variables
+uv_async_t asyncNewScript;
+vector<AsyncScriptInfo*> scriptsInfo;
+uv_mutex_t moreScriptsMutex;
+rtScript script; //todo (false)?
+
+void processNewScript(uv_async_t *handle)
+{
+  rtLogInfo(__FUNCTION__);
+  //printf("processNewScript\n");
+  std::vector<AsyncScriptInfo*> localInfo;
+  uv_mutex_lock(&moreScriptsMutex);
+  for(AsyncScriptInfo* info: scriptsInfo)
+  {
+    localInfo.push_back(info);
+    //printf("processNewScript pushed one\n");
+  }
+  //printf("processNewScript clearing\n");
+  scriptsInfo.clear();
+  uv_mutex_unlock(&moreScriptsMutex);
+  // Process the scripts we picked off the global vector
+  for(AsyncScriptInfo* info: localInfo)
+  {
+    //printf("processNewScript running script!\n");
+    info->m_pView->runScript();
+    delete info;
+
+  }
+  localInfo.clear();
+}
+
+
+
 #endif // RUNINMAIN
 #endif //ENABLE_RT_NODE
 
