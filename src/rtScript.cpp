@@ -25,6 +25,7 @@
 #include "rtPathUtils.h"
 
 #include "assert.h"
+#include "rtThreadUtils.h"
 
 #if defined RTSCRIPT_SUPPORT_NODE || defined RTSCRIPT_SUPPORT_V8
 #include "rtScriptV8/rtScriptV8Node.h"
@@ -81,7 +82,7 @@ void rtWrapperSceneUpdateEnter()
   //assert(pthread_mutex_lock(&sSceneLock) == 0);
   //sCurrentSceneThread = pthread_self();
   // Main thread is now NOT the node thread
-  if(rtIsMainThreadNode())
+  if(rtIsMainThread())
   {
     // Check if this thread already has a lock 
     if(rtWrapperSceneUpdateHasLock()) 
@@ -117,7 +118,7 @@ void rtWrapperSceneUpdateExit()
 { 
 #ifndef RUNINMAIN
   //printf("rtWrapperSceneUpdateExit() pthread_self= %x\n",pthread_self());
-  if(rtIsMainThreadNode()) {
+  if(rtIsMainThread()) {
  
 #ifndef RT_USE_SINGLE_RENDER_THREAD
   assert(rtWrapperSceneUpdateHasLock());
@@ -127,7 +128,7 @@ void rtWrapperSceneUpdateExit()
 
 #ifdef USE_STD_THREADS
   if (sLockCount == 0)
-    sCurrentSceneThread = std::thread::id()
+    sCurrentSceneThread = std::thread::id();
 #else
   if (sLockCount == 0)
     sCurrentSceneThread = 0;

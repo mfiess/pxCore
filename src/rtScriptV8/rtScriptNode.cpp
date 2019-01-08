@@ -248,6 +248,7 @@ private:
 #endif
 
   int mRefCount;
+  bool mInitialized;
 };
 
 
@@ -934,14 +935,7 @@ rtError rtNodeContext::runFile(const char *file, rtValue* retVal /*= NULL*/, con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-rtScriptNode::rtScriptNode():mRefCount(0)
-#ifndef RUNINMAIN
-#ifdef USE_CONTEXTIFY_CLONES
-: mRefContext(), mNeedsToEnd(false)
-#else
-: mNeedsToEnd(false)
-#endif
-#endif
+rtScriptNode::rtScriptNode():mRefCount(0), mInitialized(false)
 {
   rtLogInfo(__FUNCTION__);
   mTestGc = false;
@@ -950,14 +944,7 @@ rtScriptNode::rtScriptNode():mRefCount(0)
   init();
 }
 
-rtScriptNode::rtScriptNode(bool initialize):mRefCount(0)
-#ifndef RUNINMAIN
-#ifdef USE_CONTEXTIFY_CLONES
-: mRefContext(), mNeedsToEnd(false)
-#else
-: mNeedsToEnd(false)
-#endif
-#endif
+rtScriptNode::rtScriptNode(bool initialize):mRefCount(0), mInitialized(false)
 {
   rtLogInfo(__FUNCTION__);
   mTestGc = false;
@@ -1052,6 +1039,7 @@ rtError rtScriptNode::init()
   init2(argc, argv);
 #endif
 #endif // ENABLE_NODE_V_6_9
+  mInitialized = true;
   return RT_OK;
 }
 
@@ -1157,13 +1145,6 @@ void rtScriptNode::nodePath()
     }
   }
 }
-#ifndef RUNINMAIN
-bool rtNode::isInitialized()
-{
-  //rtLogDebug("rtNode::isInitialized returning %d\n",node_is_initialized);
-  return node_is_initialized;
-}
-#endif
 
 #if 1
 #ifdef ENABLE_DEBUG_MODE

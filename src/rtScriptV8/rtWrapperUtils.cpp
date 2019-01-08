@@ -24,13 +24,14 @@ extern uv_mutex_t threadMutex;
 #endif
 #include <rtMutex.h>
 
-#ifdef __APPLE__
+#if defined(USE_STD_THREADS)
+#include <thread>
+#include <mutex>
+static std::recursive_mutex sObjectMapMutex;
+#elif defined(__APPLE__)
 #ifndef RUNINMAIN
 static pthread_mutex_t sObjectMapMutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER; //PTHREAD_MUTEX_INITIALIZER;
 #endif //!RUNINMAIN
-#elif defined(USE_STD_THREADS)
-#include <thread>
-#include <mutex>
 #else
 #ifndef RUNINMAIN
 static pthread_mutex_t sObjectMapMutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
@@ -74,7 +75,11 @@ static void WeakCallback(const WeakCallbackInfo<rtIObject>& data) {
   rtObjectRef temp;
 rtWrapperSceneUpdateEnter();
 #ifndef RUNINMAIN
-  pthread_mutex_lock(&sObjectMapMutex);
+ #ifdef USE_STD_THREADS
+  sObjectMapMutex.lock();
+#else
+    pthread_mutex_lock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
 #endif
   ObjectReferenceMap::iterator j = objectMap.find(data.GetParameter());
   if (j != objectMap.end())
@@ -96,7 +101,11 @@ rtWrapperSceneUpdateEnter();
   }
 rtWrapperSceneUpdateExit();
 #ifndef RUNINMAIN
-  pthread_mutex_unlock(&sObjectMapMutex);
+  #ifdef USE_STD_THREADS
+    sObjectMapMutex.unlock();
+  #else
+    pthread_mutex_unlock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
 #endif
   if (NULL != temp.getPtr())
   {
@@ -144,7 +153,11 @@ void weakCallback_rt2v8(const WeakCallbackData<Object, rtIObject>& data)
   // rtLogInfo("contextId: %u addr:%p", contextId, data.GetParameter());
 rtWrapperSceneUpdateEnter();
 #ifndef RUNINMAIN
-  pthread_mutex_lock(&sObjectMapMutex);
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.lock();
+  #else
+    pthread_mutex_lock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
 #endif
   ObjectReferenceMap::iterator j = objectMap.find(data.GetParameter());
   if (j != objectMap.end())
@@ -178,7 +191,11 @@ rtWrapperSceneUpdateEnter();
   }
 rtWrapperSceneUpdateExit();
 #ifndef RUNINMAIN
-  pthread_mutex_unlock(&sObjectMapMutex);
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.unlock();
+  #else
+    pthread_mutex_unlock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
 #endif
   if (NULL != temp.getPtr())
   {
@@ -203,8 +220,12 @@ HandleMap::clearAllForContext(uint32_t contextId)
   int n = 0;
 rtWrapperSceneUpdateEnter();
 #ifndef RUNINMAIN
-  pthread_mutex_lock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.lock();
+  #else
+    pthread_mutex_lock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //RUNINMAIN
   rtLogInfo("clearing all persistent handles for: %u size:%u", contextId,
     static_cast<unsigned>(objectMap.size()));
   vector<iterator> refs;
@@ -239,8 +260,12 @@ rtWrapperSceneUpdateEnter();
       //static_cast<unsigned>(objectMap.size()));
 rtWrapperSceneUpdateExit();
 #ifndef RUNINMAIN
-  pthread_mutex_unlock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.unlock();
+  #else
+    pthread_mutex_unlock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //!RUNINMAIN
 }
 
 void HandleMap::addWeakReference(v8::Isolate* isolate, const rtObjectRef& from, Local<Object>& to)
@@ -252,8 +277,12 @@ void HandleMap::addWeakReference(v8::Isolate* isolate, const rtObjectRef& from, 
   assert(contextIdCreation != 0);
 rtWrapperSceneUpdateEnter();
 #ifndef RUNINMAIN
-  pthread_mutex_lock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.lock();
+  #else
+    pthread_mutex_lock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //!RUNINMAIN
   ObjectReferenceMap::iterator i = objectMap.find(from.getPtr());
   if (i != objectMap.end())
   {
@@ -280,8 +309,12 @@ rtWrapperSceneUpdateEnter();
   }
 rtWrapperSceneUpdateExit();
 #ifndef RUNINMAIN
-  pthread_mutex_unlock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.unlock();
+  #else
+    pthread_mutex_unlock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //!RUNINMAIN
 
   #if 0
   static FILE* f = NULL;
@@ -301,8 +334,12 @@ void HandleMap::printAll()
 {
   rtWrapperSceneUpdateEnter();
 #ifndef RUNINMAIN
-  pthread_mutex_lock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.lock();
+  #else
+    pthread_mutex_lock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //!RUNINMAIN
   unsigned num = static_cast<unsigned>(objectMap.size());
   if (num > 0)
   {
@@ -321,8 +358,12 @@ void HandleMap::printAll()
   }
   rtWrapperSceneUpdateExit();
 #ifndef RUNINMAIN
-  pthread_mutex_unlock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.unlock();
+  #else
+    pthread_mutex_unlock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //!RUNINMAIN
 }
 
 Local<Object> HandleMap::lookupSurrogate(v8::Local<v8::Context>& ctx, const rtObjectRef& from)
@@ -332,22 +373,34 @@ Local<Object> HandleMap::lookupSurrogate(v8::Local<v8::Context>& ctx, const rtOb
   Local<Object> obj;
 rtWrapperSceneUpdateEnter();
 #ifndef RUNINMAIN
-  pthread_mutex_lock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.lock();
+  #else
+    pthread_mutex_lock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //!RUNINMAIN
   ObjectReferenceMap::iterator i = objectMap.find(from.getPtr());
   if (i == objectMap.end())
   {
     rtWrapperSceneUpdateExit();
 #ifndef RUNINMAIN
-    pthread_mutex_unlock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+    sObjectMapMutex.unlock();
+  #else
+      pthread_mutex_unlock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //!RUNINMAIN
     return scope.Escape(obj);
   }
   obj = PersistentToLocal(isolate, i->second->PersistentObject);
 rtWrapperSceneUpdateExit();
 #ifndef RUNINMAIN
-  pthread_mutex_unlock(&sObjectMapMutex);
-#endif
+  #ifdef USE_STD_THREADS
+  sObjectMapMutex.unlock();
+  #else
+    pthread_mutex_unlock(&sObjectMapMutex);
+  #endif //USE_STD_THREADS
+#endif //!RUNINMAIN
 
   #if 1
   if (!obj.IsEmpty())

@@ -58,9 +58,6 @@ void rtLogSetLogHandler(rtLogHandler logHandler);
 const char* rtLogLevelToString(rtLogLevel level);
 rtLogLevel  rtLogLevelFromString(const char* s);
 
-rtThreadId rtThreadGetCurrentId();
-
-
 #ifdef __GNUC__
 #define RT_PRINTF_FORMAT(IDX, FIRST) __attribute__ ((format (printf, IDX, FIRST)))
 #else

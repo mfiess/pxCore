@@ -32,6 +32,7 @@
 #include <Windows.h>
 #define strcasecmp _stricmp
 #endif
+#include "rtThreadUtils.h"
 
 #include <inttypes.h>
 #include <rtThreadTask.h>
@@ -161,17 +162,4 @@ void rtLogPrintf(rtLogLevel level, const char* file, int line, const char* forma
   
   if (level == RT_LOG_FATAL)
     abort();
-}
-
-rtThreadId rtThreadGetCurrentId()
-{
-#ifdef __APPLE__
-  uint64_t threadId = 0;
-  pthread_threadid_np(NULL, &threadId);
-  return threadId;
-#elif WIN32
-  return GetCurrentThreadId();
-#else
-  return syscall(__NR_gettid);
-#endif
 }
