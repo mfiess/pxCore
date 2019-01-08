@@ -117,6 +117,7 @@ pxContextFramebufferRef currentFramebuffer = defaultFramebuffer;
 #ifdef RUNINMAIN
 extern rtScript script;
 #else
+#include "uv.h"
 extern uv_async_t gcTrigger;
 #endif
 extern pxContext context;

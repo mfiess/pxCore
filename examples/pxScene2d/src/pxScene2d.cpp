@@ -136,7 +136,7 @@ rtScript script;
 //mfnote: todo - better rename the variables
 uv_async_t asyncNewScript;
 vector<AsyncScriptInfo*> scriptsInfo;
-uv_mutex_t moreScriptsMutex;
+uv_mutex_t gScriptsMutex;
 rtScript script; //todo (false)?
 
 void processNewScript(uv_async_t *handle)
@@ -144,7 +144,7 @@ void processNewScript(uv_async_t *handle)
   rtLogInfo(__FUNCTION__);
   //printf("processNewScript\n");
   std::vector<AsyncScriptInfo*> localInfo;
-  uv_mutex_lock(&moreScriptsMutex);
+  uv_mutex_lock(&gScriptsMutex);
   for(AsyncScriptInfo* info: scriptsInfo)
   {
     localInfo.push_back(info);
@@ -152,7 +152,7 @@ void processNewScript(uv_async_t *handle)
   }
   //printf("processNewScript clearing\n");
   scriptsInfo.clear();
-  uv_mutex_unlock(&moreScriptsMutex);
+  uv_mutex_unlock(&gScriptsMutex);
   // Process the scripts we picked off the global vector
   for(AsyncScriptInfo* info: localInfo)
   {
@@ -3970,9 +3970,9 @@ rtError pxSceneContainer::setUrl(rtString url)
     AsyncScriptInfo * info = new AsyncScriptInfo();
     info->m_pView = scriptView;
     //info->m_pWindow = this;
-    uv_mutex_lock(&moreScriptsMutex);
+    uv_mutex_lock(&gScriptsMutex);
     scriptsInfo.push_back(info);
-    uv_mutex_unlock(&moreScriptsMutex);
+    uv_mutex_unlock(&gScriptsMutex);
     uv_async_send(&asyncNewScript);
     setScriptView(scriptView);
 #endif
@@ -4124,18 +4124,7 @@ pxScriptView::pxScriptView(const char* url, const char* /*lang*/, pxIViewContain
 {
   rtLogDebug("pxScriptView::pxScriptView()entering\n");
   mUrl = url;
-#ifndef RUNINMAIN // NOTE this ifndef ends after runScript decl, below
-  mReady = new rtPromise();
- // mLang = lang;
-  rtLogDebug("pxScriptView::pxScriptView() exiting\n");
-}
-
-void pxScriptView::runScript()
-{
-  rtLogInfo(__FUNCTION__);
-#endif // ifndef RUNINMAIN
-
-// escape url begin
+  // escape url begin
   string escapedUrl;
   string origUrl = url;
   for (string::iterator it=origUrl.begin(); it!=origUrl.end(); ++it)
@@ -4154,6 +4143,17 @@ void pxScriptView::runScript()
     mUrl = "";
   }
 // escape url end
+
+#ifndef RUNINMAIN // NOTE this ifndef ends after runScript decl, below
+  mReady = new rtPromise();
+ // mLang = lang;
+  rtLogDebug("pxScriptView::pxScriptView() exiting\n");
+}
+
+void pxScriptView::runScript()
+{
+  rtLogInfo(__FUNCTION__);
+#endif // ifndef RUNINMAIN
 
   #ifdef ENABLE_RT_NODE
   rtLogDebug("pxScriptView::pxScriptView is just now creating a context for mUrl=%s\n",mUrl.cString());

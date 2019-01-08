@@ -37,8 +37,8 @@
 #ifdef RUNINMAIN
 extern rtScript script;
 #else
-using namespace std;
-#include "rtNodeThread.h"
+//using namespace std;
+//#include "rtNodeThread.h"
 #endif
 
 //#include "jsbindings/rtWrapperUtils.h"
@@ -82,8 +82,14 @@ using namespace std;
 
 #ifndef RUNINMAIN
 class AsyncScriptInfo;
-vector<AsyncScriptInfo*> scriptsInfo;
-static uv_work_t nodeLoopReq;
+std::vector<AsyncScriptInfo*> scriptsInfo;
+static uv_work_t gScriptLoopReq;
+extern uv_loop_t *gScriptProcessingLoop;
+extern uv_mutex_t gScriptsMutex;
+extern uv_async_t asyncNewScript;
+extern uv_async_t gGcTrigger;
+extern bool gScriptThreadIsRunning;
+extern rtScript script;
 #endif
 
 #include "rtThreadPool.h"
@@ -210,9 +216,9 @@ public:
     rtLogInfo("new scriptView is %x\n",scriptView);
     AsyncScriptInfo * info = new AsyncScriptInfo();
     info->m_pView = scriptView;
-    uv_mutex_lock(&moreScriptsMutex);
+    uv_mutex_lock(&gScriptsMutex);
     scriptsInfo.push_back(info);
-    uv_mutex_unlock(&moreScriptsMutex);
+    uv_mutex_unlock(&gScriptsMutex);
     rtLogDebug("sceneWindow::script is pushed on vector\n");
     uv_async_send(&asyncNewScript);
     setView(scriptView);
@@ -276,7 +282,7 @@ protected:
 
 #ifndef RUNINMAIN
     uv_close((uv_handle_t*) &asyncNewScript, NULL);
-    uv_close((uv_handle_t*) &gcTrigger, NULL);
+    uv_close((uv_handle_t*) &gGcTrigger, NULL);
 #endif
    // pxScene.cpp:104:12: warning: deleting object of abstract class type ‘pxIView’ which has non-virtual destructor will cause undefined behaviour [-Wdelete-non-virtual-dtor]
 
@@ -285,7 +291,9 @@ protected:
     mView = NULL;
   EXITSCENELOCK()
   #ifndef RUNINMAIN
-   script.setNeedsToEnd(true);
+   //script.setNeedsToEnd(true);
+    //mfnote: come back and fix
+    gScriptThreadIsRunning = false;
   #endif
   #ifdef ENABLE_DEBUG_MODE
     free(g_origArgv);
@@ -583,23 +591,23 @@ int pxMain(int argc, char* argv[])
     signal(SIGABRT, handleAbrt);
   }
 #ifndef RUNINMAIN
-  rtLogWarn("Setting  __rt_main_thread__ to be %x\n",pthread_self());
-   __rt_main_thread__ = pthread_self(); //  NB
-  rtLogWarn("Now  __rt_main_thread__ is %x\n",__rt_main_thread__);
+  //rtLogWarn("Setting  __rt_main_thread__ to be %x\n",pthread_self());
+  // __rt_main_thread__ = pthread_self(); //  NB
+  //rtLogWarn("Now  __rt_main_thread__ is %x\n",__rt_main_thread__);
   //rtLogWarn("rtIsMainThread() returns %d\n",rtIsMainThread());
 
     #if PX_PLATFORM_X11
     XInitThreads();
     #endif
 
-  uv_mutex_init(&moreScriptsMutex);
+  uv_mutex_init(&gScriptsMutex);
   uv_mutex_init(&threadMutex);
 
   // Start script thread
-  uv_queue_work(nodeLoop, &nodeLoopReq, nodeThread, nodeIsEndingCallback);
+  uv_queue_work(gScriptProcessingLoop, &gScriptLoopReq, nodeThread, nodeIsEndingCallback);
   // init asynch that will get notifications about new scripts
-  uv_async_init(nodeLoop, &asyncNewScript, processNewScript);
-  uv_async_init(nodeLoop, &gcTrigger,collectGarbage);
+  uv_async_init(gScriptProcessingLoop, &asyncNewScript, processNewScript);
+  uv_async_init(gScriptProcessingLoop, &gGcTrigger,collectGarbage);
 
 #endif
 

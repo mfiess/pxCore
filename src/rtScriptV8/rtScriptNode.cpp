@@ -254,7 +254,7 @@ private:
 
 
 #ifndef RUNINMAIN
-extern uv_loop_t *nodeLoop;
+uv_loop_t *gScriptProcessingLoop = uv_default_loop();
 #endif
 //#include "rtThreadQueue.h"
 
@@ -326,11 +326,11 @@ static pthread_t __rt_main_thread__;
 //
 // rtIsMainThread() - Currently:   identify BACKGROUND thread which running JS code.
 //
-bool rtIsMainThreadNode()
+/*bool rtIsMainThreadNode()
 {
   // Since this is single threaded version we're always on the js thread
   return true;
-}
+}*/
 #endif
 #if 0
 static inline bool file_exists(const char *file)
@@ -1156,7 +1156,7 @@ void rtScriptNode::nodePath()
 #ifndef RUNINMAIN
 #include "pxTimer.h"
 uv_loop_t *scriptLoop = uv_default_loop();
-uv_async_t gcTrigger;
+uv_async_t gGcTrigger;
 uv_mutex_t threadMutex;
 bool gScriptThreadIsRunning = false;
 void rtScriptNode::collectGarbageThreadSafe()
@@ -1191,7 +1191,7 @@ void rtScriptNode::start(uv_work_t *req)
       v8::Locker locker(getIsolate());
       v8::Isolate::Scope isolate_scope(getIsolate());
       v8::HandleScope handle_scope(getIsolate());
-      uv_run(nodeLoop, UV_RUN_NOWAIT);
+      uv_run(gScriptProcessingLoop, UV_RUN_NOWAIT);
       uv_mutex_unlock(&threadMutex);
     }
     pxSleepMS(50);
