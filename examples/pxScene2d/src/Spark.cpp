@@ -34,12 +34,7 @@
 #include "pxUtil.h"
 #include "rtSettings.h"
 
-#ifdef RUNINMAIN
 extern rtScript script;
-#else
-using namespace std;
-#include "rtNodeThread.h"
-#endif
 
 //#include "jsbindings/rtWrapperUtils.h"
 #include <signal.h>
@@ -79,12 +74,6 @@ using namespace std;
 #ifdef PX_SERVICE_MANAGER_LINKED
 #include "rtservicemanager.h"
 #endif //PX_SERVICE_MANAGER_LINKED
-
-#ifndef RUNINMAIN
-class AsyncScriptInfo;
-vector<AsyncScriptInfo*> scriptsInfo;
-static uv_work_t nodeLoopReq;
-#endif
 
 #include "rtThreadPool.h"
 
@@ -203,19 +192,10 @@ public:
       snprintf(buffer,sizeof(buffer),"shell.js?url=%s",escapedUrl.c_str());
     }
 
-#ifdef RUNINMAIN
-    setView( new pxScriptView(buffer,"javascript/node/v8"));
-#else
-    pxScriptView * scriptView = new pxScriptView(buffer, "javascript/node/v8");
-    rtLogInfo("new scriptView is %x\n",scriptView);
-    AsyncScriptInfo * info = new AsyncScriptInfo();
-    info->m_pView = scriptView;
-    uv_mutex_lock(&moreScriptsMutex);
-    scriptsInfo.push_back(info);
-    uv_mutex_unlock(&moreScriptsMutex);
-    rtLogDebug("sceneWindow::script is pushed on vector\n");
-    uv_async_send(&asyncNewScript);
+    pxScriptView* scriptView = new pxScriptView(buffer,"javascript/node/v8");
     setView(scriptView);
+#ifndef RUNINMAIN
+    script.executeTask(scriptView);
 #endif
     return RT_OK;
   }
@@ -274,19 +254,15 @@ protected:
     EXITSCENELOCK()
     // delete mView;
 
-#ifndef RUNINMAIN
-    uv_close((uv_handle_t*) &asyncNewScript, NULL);
-    uv_close((uv_handle_t*) &gcTrigger, NULL);
-#endif
    // pxScene.cpp:104:12: warning: deleting object of abstract class type ‘pxIView’ which has non-virtual destructor will cause undefined behaviour [-Wdelete-non-virtual-dtor]
 
 
   ENTERSCENELOCK()
     mView = NULL;
   EXITSCENELOCK()
-  #ifndef RUNINMAIN
-   script.setNeedsToEnd(true);
-  #endif
+#ifndef RUNINMAIN
+    script.stopBackgroundProcessing();
+#endif
   #ifdef ENABLE_DEBUG_MODE
     free(g_origArgv);
   #endif
@@ -582,26 +558,6 @@ int pxMain(int argc, char* argv[])
     signal(SIGSEGV, handleSegv);
     signal(SIGABRT, handleAbrt);
   }
-#ifndef RUNINMAIN
-  rtLogWarn("Setting  __rt_main_thread__ to be %x\n",pthread_self());
-   __rt_main_thread__ = pthread_self(); //  NB
-  rtLogWarn("Now  __rt_main_thread__ is %x\n",__rt_main_thread__);
-  //rtLogWarn("rtIsMainThread() returns %d\n",rtIsMainThread());
-
-    #if PX_PLATFORM_X11
-    XInitThreads();
-    #endif
-
-  uv_mutex_init(&moreScriptsMutex);
-  uv_mutex_init(&threadMutex);
-
-  // Start script thread
-  uv_queue_work(nodeLoop, &nodeLoopReq, nodeThread, nodeIsEndingCallback);
-  // init asynch that will get notifications about new scripts
-  uv_async_init(nodeLoop, &asyncNewScript, processNewScript);
-  uv_async_init(nodeLoop, &gcTrigger,collectGarbage);
-
-#endif
 
   
 #ifdef PX_PLATFORM_MAC_XCODE
@@ -699,9 +655,7 @@ if (s && (strcmp(s,"1") == 0))
   #endif
 #endif
 
-#ifdef RUNINMAIN
   script.init();
-#endif
   char buffer[256];
   sprintf(buffer, "Spark: %s", xstr(PX_SCENE_VERSION));
 

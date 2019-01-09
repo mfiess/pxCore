@@ -21,6 +21,7 @@
 #ifndef _RT_SCRIPT_H
 #define _RT_SCRIPT_H
 
+#include <mutex>
 #include "rtError.h"
 #include "rtValue.h"
 #include "rtRef.h"
@@ -79,10 +80,20 @@ public:
 
 typedef rtRef<rtIScript> rtScriptRef;
 
+class rtIScriptTask
+{
+public:
+    virtual unsigned long AddRef() = 0;
+    virtual unsigned long Release() = 0;
+    virtual void executeScript() = 0;
+};
+
+typedef rtRef<rtIScriptTask> rtScriptTaskRef;
+
 class rtScript
 {
 public:
-  rtScript();
+  rtScript(bool threaded);
   ~rtScript();
 
   rtError init();
@@ -98,9 +109,16 @@ public:
 
   void* getParameter(rtString param);
 
+  void startBackgroundProcessing();
+  void stopBackgroundProcessing();
+  void executeTask(rtScriptTaskRef task);
+
 private:
   bool mInitialized;
   rtScriptRef mScript;
+  std::vector<rtScriptTaskRef> mScriptTasks;
+  std::recursive_mutex mScriptMutex;
+  bool mThreaded;
 };
 
 class rtWrapperSceneUnlocker

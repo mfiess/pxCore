@@ -76,13 +76,7 @@
 #define EXITSCENELOCK() 
 #else
 #define ENTERSCENELOCK() rtWrapperSceneUpdateEnter();
-#define EXITSCENELOCK() rtWrapperSceneUpdateExit(); 
-class pxScriptView;
-class AsyncScriptInfo {
-  public:
-    pxScriptView * m_pView;
-    //pxIViewContainer * m_pWindow;
-};
+#define EXITSCENELOCK() rtWrapperSceneUpdateExit();
 #endif
 
 #define MAX_URL_SIZE 8000
@@ -1100,13 +1094,11 @@ typedef rtRef<pxObject> pxObjectRef;
 // Important that this have a separate lifetime from scene object
 // and to not hold direct references to this objects from the script context
 // Don't make this into an rtObject
-class pxScriptView: public pxIView
+class pxScriptView: public pxIView, public rtIScriptTask
 {
 public:
   pxScriptView(const char* url, const char* /*lang*/, pxIViewContainer* container=NULL);
-#ifndef RUNINMAIN
-  void runScript(); // Run the script
-#endif
+  virtual void executeScript();
   virtual ~pxScriptView()
   {
     rtLogDebug("~pxScriptView for mUrl=%s\n",mUrl.cString());
@@ -1206,6 +1198,7 @@ protected:
   static rtError makeReady(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* ctx);
 
   static rtError getContextID(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* /*ctx*/);
+  static rtError contextReady(int /*numArgs*/, const rtValue* /*args*/, rtValue* result, void* ctx);
 
   virtual void onSize(int32_t w, int32_t h)
   {
@@ -1340,6 +1333,7 @@ protected:
   rtString mLang;
 #endif
   static rtEmitRef mEmit;
+  rtMutex mScriptMutex;
 };
 
 class pxScene2d: public rtObject, public pxIView, public rtIServiceProvider
@@ -1641,7 +1635,7 @@ public:
     if (NULL != sceneContainer)
     {
       pxScene2d* scene = sceneContainer->getScene();
-      if (NULL != scene)
+      if (NULL != scene && mArchiveSet)
       {
         parentArchive = scene->getArchive();
       }
@@ -1690,7 +1684,9 @@ public:
   rtError getAvailableApplications(rtString& availableApplications);
   rtObjectRef getArchive()
   {
+    //TODO - fix me!!! mfnote
     return mArchive;
+    //return NULL;
   }
 
 private:

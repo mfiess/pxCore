@@ -22,6 +22,7 @@ limitations under the License.
 #include "../pxEventLoop.h"
 
 #include <windows.h>
+#include "../rtThreadUtils.h"
 
 void pxEventLoop::run()
 {
@@ -59,6 +60,7 @@ int CALLBACK WinMain(
 	//extern int __argc;          /* count of cmd line args */
 	//extern char ** __argv;      /* pointer to table of cmd line args */
 	//pxMain(__argc,__argv);
+        rtThreadUtilsInit();
 	pxMain(0, NULL);
 	return 0;
 }
@@ -75,6 +77,7 @@ int main(int argc, char** argv)
 			ShowWindow(GetConsoleWindow(), SW_HIDE);
 		}
 	}
+  rtThreadUtilsInit();
   pxMain(argc,argv);
   return 0;
 }

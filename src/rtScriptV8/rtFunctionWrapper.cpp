@@ -26,6 +26,8 @@ extern bool gIsPumpingJavaScript;
 #endif
 using namespace v8;
 
+#include "rtThreadUtils.h"
+
 namespace rtScriptV8NodeUtils
 {
 
@@ -425,7 +427,7 @@ rtError jsFunctionWrapper::Send(int numArgs, const rtValue* args, rtValue* resul
 
   if (result) // wants result run synchronously
   {
-    if (rtIsMainThreadNode()) // main thread run now
+    if (rtIsMainThread()) // main thread run now
     {
       *result = callback->run();
       delete callback;

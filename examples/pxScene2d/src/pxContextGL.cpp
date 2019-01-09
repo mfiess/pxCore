@@ -114,11 +114,7 @@ pxContextFramebufferRef defaultFramebuffer(new pxContextFramebuffer());
 pxContextFramebufferRef currentFramebuffer = defaultFramebuffer;
 
 
-#ifdef RUNINMAIN
 extern rtScript script;
-#else
-extern uv_async_t gcTrigger;
-#endif
 extern pxContext context;
 rtThreadQueue* gUIThreadQueue = new rtThreadQueue();
 
@@ -2856,11 +2852,7 @@ void pxContext::adjustCurrentTextureMemorySize(int64_t changeInBytes, bool allow
   if (mEnableTextureMemoryMonitoring && allowGarbageCollect && changeInBytes > 0 && currentTextureMemorySize > maxTextureMemoryInBytes)
   {
     rtLogDebug("the texture size is too large: %" PRId64 ".  doing a garbage collect!!!\n", currentTextureMemorySize);
-#ifdef RUNINMAIN
-	script.collectGarbage();
-#else
-  uv_async_send(&gcTrigger);
-#endif
+	  script.collectGarbage();
   }
 }
 
@@ -2884,22 +2876,14 @@ bool pxContext::isTextureSpaceAvailable(pxTextureRef texture, bool allowGarbageC
   {
     if (allowGarbageCollect)
     {
-      #ifdef RUNINMAIN
-        script.collectGarbage();
-      #else
-        uv_async_send(&gcTrigger);
-      #endif
+      script.collectGarbage();
     }
     return false;
   }
   else if (allowGarbageCollect && (textureSize + currentTextureMemorySize) > maxTextureMemoryInBytes)
   {
-#ifdef RUNINMAIN
     rtLogInfo("gc for texture memory");
     script.collectGarbage();
-#else
-    uv_async_send(&gcTrigger);
-#endif
   }
   return true;
 }

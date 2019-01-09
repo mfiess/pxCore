@@ -38,6 +38,8 @@ limitations under the License.
   #include "pxWindowNative.h"
 #endif
 
+#include "../rtThreadUtils.h"
+
 void pxEventLoop::run()
 {
     // For now we delegate off to the x11 pxWindowNative class
@@ -61,6 +63,7 @@ void pxEventLoop::exit()
 #ifndef ENABLE_DFB_GENERIC
 int main(int argc, char* argv[])
 {
+  rtThreadUtilsInit();
   return pxMain(argc, argv);
 }
 #endif

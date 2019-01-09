@@ -128,15 +128,7 @@ uint32_t gFboBindCalls;
 #ifdef ENABLE_RT_NODE
 extern void rtWrapperSceneUpdateEnter();
 extern void rtWrapperSceneUpdateExit();
-#ifdef RUNINMAIN
-rtScript script;
-#else
-class AsyncScriptInfo;
-extern vector<AsyncScriptInfo*> scriptsInfo;
-extern uv_mutex_t moreScriptsMutex;
-extern uv_async_t asyncNewScript;
-extern uv_async_t gcTrigger;
-#endif // RUNINMAIN
+rtScript script(true);
 #endif //ENABLE_RT_NODE
 
 #ifdef ENABLE_VALGRIND
@@ -3933,18 +3925,10 @@ rtError pxSceneContainer::setUrl(rtString url)
   mReady = new rtPromise();
 
   mUrl = url;
-#ifdef RUNINMAIN
-    setScriptView(new pxScriptView(url.cString(), "", this));
-#else
-    pxScriptView * scriptView = new pxScriptView(url.cString(),"", this);
-    AsyncScriptInfo * info = new AsyncScriptInfo();
-    info->m_pView = scriptView;
-    //info->m_pWindow = this;
-    uv_mutex_lock(&moreScriptsMutex);
-    scriptsInfo.push_back(info);
-    uv_mutex_unlock(&moreScriptsMutex);
-    uv_async_send(&asyncNewScript);
-    setScriptView(scriptView);
+  pxScriptView* scriptView = new pxScriptView(url.cString(), "", this);
+  setScriptView(scriptView);
+#ifndef RUNINMAIN
+  script.executeTask(scriptView);
 #endif
 
   return RT_OK;
@@ -4089,23 +4073,18 @@ rtError createObject2(const char* t, rtObjectRef& o)
 }
 #endif
 
+rtError pxScriptView::contextReady(int numArgs, const rtValue* args, rtValue* /*result*/, void* ctx)
+{
+  rtLogInfo(__FUNCTION__);
+  return RT_OK;
+}
+
 pxScriptView::pxScriptView(const char* url, const char* /*lang*/, pxIViewContainer* container)
-     : mWidth(-1), mHeight(-1), mViewContainer(container), mRefCount(0)
+     : mWidth(-1), mHeight(-1), mViewContainer(container), mRefCount(0), mScriptMutex()
 {
   rtLogDebug("pxScriptView::pxScriptView()entering\n");
   mUrl = url;
-#ifndef RUNINMAIN // NOTE this ifndef ends after runScript decl, below
-  mReady = new rtPromise();
- // mLang = lang;
-  rtLogDebug("pxScriptView::pxScriptView() exiting\n");
-}
-
-void pxScriptView::runScript()
-{
-  rtLogInfo(__FUNCTION__);
-#endif // ifndef RUNINMAIN
-
-// escape url begin
+  // escape url begin
   string escapedUrl;
   string origUrl = url;
   for (string::iterator it=origUrl.begin(); it!=origUrl.end(); ++it)
@@ -4124,6 +4103,20 @@ void pxScriptView::runScript()
     mUrl = "";
   }
 // escape url end
+#ifndef RUNINMAIN // NOTE this ifndef ends after runScript decl, below
+  //mReady = new rtPromise();
+ // mLang = lang;
+  rtLogDebug("pxScriptView::pxScriptView() exiting\n");
+  //executeScript();
+#else
+  executeScript();
+#endif
+}
+
+void pxScriptView::executeScript()
+{
+  rtLogInfo(__FUNCTION__);
+
 
   #ifdef ENABLE_RT_NODE
   rtLogDebug("pxScriptView::pxScriptView is just now creating a context for mUrl=%s\n",mUrl.cString());
@@ -4142,9 +4135,9 @@ void pxScriptView::runScript()
     mCtx->add("makeReady", mMakeReady.getPtr());
     mCtx->add("getContextID", mGetContextID.getPtr());
 
-#ifdef RUNINMAIN
+//#ifdef RUNINMAIN
     mReady = new rtPromise();
-#endif
+//#endif
 
     mCtx->runFile("init.js");
 

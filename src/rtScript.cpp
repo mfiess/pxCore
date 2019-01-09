@@ -26,6 +26,7 @@
 
 #include "assert.h"
 #include "rtThreadUtils.h"
+#include "pxTimer.h"
 
 #if defined RTSCRIPT_SUPPORT_NODE || defined RTSCRIPT_SUPPORT_V8
 #include "rtScriptV8/rtScriptV8Node.h"
@@ -70,7 +71,18 @@ bool rtWrapperSceneUpdateHasLock()
 #endif
 }
 
+std::recursive_mutex gSceneMutex;
+
 void rtWrapperSceneUpdateEnter()
+{
+  gSceneMutex.lock();
+}
+void rtWrapperSceneUpdateExit()
+{
+  gSceneMutex.unlock();
+}
+
+/*void rtWrapperSceneUpdateEnter()
 {
 #ifndef RUNINMAIN
   //printf("rtWrapperSceneUpdateEnter() pthread_self= %x\n",pthread_self());
@@ -167,9 +179,65 @@ void rtWrapperSceneUpdateExit()
   assert(pthread_mutex_unlock(&sSceneLock) == 0);
 #endif
 #endif // RUNINMAIN
+}*/
+
+#ifdef RUNINMAIN
+#define ENTERSCENELOCK()
+#define EXITSCENELOCK()
+#else
+#define ENTERSCENELOCK() rtWrapperSceneUpdateEnter();
+#define EXITSCENELOCK() rtWrapperSceneUpdateExit();
+#endif
+
+std::thread* gScriptThread = NULL;
+std::recursive_mutex gScriptMutex;
+std::vector<rtScriptTaskRef> gScriptTasks;
+bool gScriptThreadRunning = false;
+
+void scriptThreadProcessing(rtScript* script)
+{
+  if (script == NULL){
+    return;
+  }
+  bool running = true;
+  std::vector<rtScriptTaskRef> tempScripts;
+  while (running)
+  {
+    {
+      std::unique_lock<std::recursive_mutex>(gScriptMutex);
+      for (std::vector<rtScriptTaskRef>::const_iterator it = gScriptTasks.begin(); it != gScriptTasks.end();it++)
+      {
+        if ((*it).getPtr() != NULL)
+        {
+          tempScripts.push_back(*it);
+        }
+      }
+      gScriptTasks.clear();
+      running = gScriptThreadRunning;
+    }
+    ENTERSCENELOCK();
+    if (tempScripts.size() > 0)
+    {
+      for (std::vector<rtScriptTaskRef>::const_iterator it = tempScripts.begin(); it != tempScripts.end(); it++)
+      {
+        if ((*it).getPtr() != NULL)
+        {
+          (*it)->executeScript();
+        }
+      }
+      tempScripts.clear();
+    }
+    script->pump();
+    EXITSCENELOCK();
+
+    pxSleepMS(16);
+  }
 }
 
-rtScript::rtScript():mInitialized(false)  {}
+rtScript::rtScript(bool threaded):mInitialized(false), mScript(),
+                                  mScriptTasks(), mScriptMutex(), mThreaded(threaded)
+{
+}
 rtScript::~rtScript() {}
 
 rtError rtScript::init()
@@ -206,11 +274,19 @@ rtError rtScript::init()
     mScript->init();
     mInitialized = true;
   }
+  if (mThreaded)
+  {
+    startBackgroundProcessing();
+  }
   return RT_OK;
 }
 
 rtError rtScript::term()
 {
+  if (mThreaded)
+  {
+    stopBackgroundProcessing();
+  }
   return RT_OK;
 }
 
@@ -240,4 +316,25 @@ rtError rtScript::createContext(const char *lang, rtScriptContextRef& ctx)
 void* rtScript::getParameter(rtString param) 
 {
   return mScript->getParameter(param);
+}
+
+void rtScript::startBackgroundProcessing()
+{
+  if (gScriptThread == NULL)
+  {
+    gScriptThreadRunning = true;
+    gScriptThread = new std::thread{scriptThreadProcessing, this};
+  }
+}
+
+void rtScript::stopBackgroundProcessing()
+{
+  std::unique_lock<std::recursive_mutex>(gScriptMutex);
+  gScriptThreadRunning = false;
+}
+
+void rtScript::executeTask(rtScriptTaskRef task)
+{
+  std::unique_lock<std::recursive_mutex>(gScriptMutex);
+  gScriptTasks.push_back(task);
 }

@@ -22,6 +22,7 @@ limitations under the License.
 
 #include "../pxOffscreen.h"
 #include "pxWindowNative.h"
+#include "../rtThreadUtils.h"
 
 void pxEventLoop::runOnce()
 {
@@ -46,5 +47,6 @@ void pxEventLoop::exit()
 
 int main(int argc, char** argv)
 {
+    rtThreadUtilsInit();
     return pxMain(argc, argv);
 }

@@ -1094,9 +1094,7 @@ rtError rtScriptNode::pump()
 
 rtError rtScriptNode::collectGarbage()
 {
-//#ifndef RUNINMAIN
-//  return;
-//#else
+  ENTERSCENELOCK()
   Locker                locker(mIsolate);
   Isolate::Scope isolate_scope(mIsolate);
   HandleScope     handle_scope(mIsolate);    // Create a stack-allocated handle scope.
@@ -1104,7 +1102,7 @@ rtError rtScriptNode::collectGarbage()
   Local<Context> local_context = Context::New(mIsolate);
   Context::Scope contextScope(local_context);
   mIsolate->LowMemoryNotification();
-//#endif // RUNINMAIN
+  EXITSCENELOCK()
   return RT_OK;
 }
 
