@@ -1639,7 +1639,7 @@ void pxObject::createSnapshot(pxContextFramebufferRef& fbo, bool separateContext
   float parentAlpha = 1.0;
   if (separateContext)
   {
-    context.enableInternalContext(true);
+    context.requestOwnership();
   }
 
   context.setMatrix(m);
@@ -1703,7 +1703,7 @@ void pxObject::createSnapshot(pxContextFramebufferRef& fbo, bool separateContext
   context.setFramebuffer(previousRenderSurface);
   if (separateContext)
   {
-    context.enableInternalContext(false);
+    context.releaseOwnership();
   }
 }
 

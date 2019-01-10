@@ -158,6 +158,8 @@ class pxContext {
   
   pxError setEjectTextureAge(uint32_t age);
   pxError enableInternalContext(bool enable);
+  pxError requestOwnership();
+  pxError releaseOwnership();
 
 private:
   bool mShowOutlines;

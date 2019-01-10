@@ -22,5 +22,7 @@ limitations under the License.
 #include "pxCore.h"
 
 pxError makeInternalGLContextCurrent(bool current);
+pxError requestContextOwnership();
+pxError releaseContextOwnership();
 
 #endif //PX_CONTEXT_UTILS_H

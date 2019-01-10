@@ -62,3 +62,15 @@ pxError makeInternalGLContextCurrent(bool current)
     }
     return PX_OK;
 }
+
+pxError requestContextOwnership()
+{
+  [openGLContext makeCurrentContext];
+  return PX_OK;
+}
+
+pxError releaseContextOwnership()
+{
+  [openGLContext clearCurrentContext];
+  return PX_OK;
+}

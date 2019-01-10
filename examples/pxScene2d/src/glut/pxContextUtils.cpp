@@ -23,3 +23,15 @@ pxError makeInternalGLContextCurrent(bool)
   //TODO
   return PX_OK;
 }
+
+pxError requestContextOwnership()
+{
+  //TODO
+  return PX_OK;
+}
+
+pxError releaseContextOwnership()
+{
+  //TODO
+  return PX_OK;
+}

@@ -123,8 +123,11 @@ enum pxCurrentGLProgram { PROGRAM_UNKNOWN = 0, PROGRAM_SOLID_SHADER,  PROGRAM_A_
 
 pxCurrentGLProgram currentGLProgram = PROGRAM_UNKNOWN;
 
-#if defined(PX_PLATFORM_WAYLAND_EGL) || defined(PX_PLATFORM_GENERIC_EGL)
+#if defined(PX_PLATFORM_WAYLAND_EGL) || defined(PX_PLATFORM_GENERIC_EGL) || defined(PX_PLATFORM_ESSOS)
 extern EGLContext defaultEglContext;
+extern EGLDisplay defaultEglDisplay;
+extern EGLSurface defaultEglDrawSurface;
+extern EGLSurface defaultEglReadSurface;
 #endif //PX_PLATFORM_GENERIC_EGL || PX_PLATFORM_WAYLAND_EGL
 
 // TODO get rid of this global crap
@@ -2259,8 +2262,12 @@ void pxContext::init()
       mTextureMemoryLimitInBytes, mTextureMemoryLimitThresholdPaddingInBytes);
   }
 
-#if defined(PX_PLATFORM_WAYLAND_EGL) || defined(PX_PLATFORM_GENERIC_EGL)
+#if defined(PX_PLATFORM_WAYLAND_EGL) || defined(PX_PLATFORM_GENERIC_EGL)  || defined(PX_PLATFORM_ESSOS)
   defaultEglContext = eglGetCurrentContext();
+  defaultEglDisplay = eglGetCurrentDisplay();
+  defaultEglDrawSurface = eglGetCurrentSurface(EGL_DRAW);
+  defaultEglReadSurface = eglGetCurrentSurface(EGL_READ);
+
   rtLogInfo("current context in init: %p", defaultEglContext);
 #endif //PX_PLATFORM_GENERIC_EGL || PX_PLATFORM_WAYLAND_EGL
 
@@ -2942,6 +2949,22 @@ pxError pxContext::enableInternalContext(bool enable)
 #else
   (void)enable;
 #endif // !RUNINMAIN || ENABLE_BACKGROUND_TEXTURE_CREATION
+  return PX_OK;
+}
+
+pxError pxContext::requestOwnership()
+{
+#if !defined(RUNINMAIN)
+  return requestContextOwnership();
+#endif // !RUNINMAIN
+  return PX_OK;
+}
+
+pxError pxContext::releaseOwnership()
+{
+#if !defined(RUNINMAIN)
+  return releaseContextOwnership();
+#endif // !RUNINMAIN
   return PX_OK;
 }
 

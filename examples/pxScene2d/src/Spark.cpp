@@ -383,16 +383,20 @@ protected:
   virtual void onDraw(pxSurfaceNative )
   {
     ENTERSCENELOCK()
+    context.requestOwnership();
     if (mView)
       mView->onDraw();
+    context.releaseOwnership();
     EXITSCENELOCK()
   }
 
   virtual void onAnimationTimer()
   {
     ENTERSCENELOCK()
+    context.requestOwnership();
     if (mView && !mClosed)
       mView->onUpdate(pxSeconds());
+    context.releaseOwnership();
     EXITSCENELOCK()
 #ifdef ENABLE_OPTIMUS_SUPPORT
     OptimusClient::pumpRemoteObjectQueue();

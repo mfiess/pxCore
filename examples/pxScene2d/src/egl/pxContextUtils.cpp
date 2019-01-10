@@ -21,27 +21,45 @@ limitations under the License.
 
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#include <map>
+#include "rtThreadUtils.h"
+#include <thread>
+#include <mutex>
+
+struct contextData
+{
+  EGLDisplay eglDisplay = 0;
+  EGLSurface eglSurface = 0;
+  EGLContext eglContext = 0;
+
+  EGLDisplay prevEglDisplay = 0;
+  EGLSurface prevEglDrawSurface = 0;
+  EGLSurface prevEglReadSurface = 0;
+  EGLContext prevEglContext = 0;
+  
+  bool isCurrent = false;
+};
 
 EGLContext defaultEglContext = 0;
+EGLDisplay defaultEglDisplay = 0;
+EGLSurface defaultEglDrawSurface = 0;
+EGLSurface defaultEglReadSurface = 0;
 
-EGLDisplay eglDisplay = 0;
-EGLSurface eglSurface = 0;
-EGLContext eglContext = 0;
+std::recursive_mutex contextsMutex;
 
-EGLDisplay prevEglDisplay = 0;
-EGLSurface prevEglDrawSurface = 0;
-EGLSurface prevEglReadSurface = 0;
-EGLContext prevEglContext = 0;
-
-bool eglContextCreated = false;
-bool eglContextIsCurrent = false;
+std::map<rtThreadId, contextData> backgroundContexts;
 
 int pxCreateEglContext()
 {
-  if (eglContextCreated)
+  rtThreadId currentThreadId = rtThreadGetCurrentId();
   {
-    return PX_FAIL;
+    std::unique_lock<std::recursive_mutex> {contextsMutex};
+    if ( backgroundContexts.find(currentThreadId) != backgroundContexts.end())
+    {
+      return PX_FAIL;
+    }
   }
+  contextData data;
   rtLogInfo("creating new context\n");
   EGLDisplay egl_display      = 0;
   EGLSurface egl_surface      = 0;
@@ -156,70 +174,115 @@ int pxCreateEglContext()
     }
   }
 
-  eglDisplay = egl_display;
-  eglSurface = egl_surface;
-  eglContext = egl_context;
-  rtLogInfo("display: %p surface: %p context: %p created\n", eglDisplay, eglSurface, eglContext);
-  eglContextCreated = true;
+  data.eglDisplay = egl_display;
+  data.eglSurface = egl_surface;
+  data.eglContext = egl_context;
+  rtLogInfo("display: %p surface: %p context: %p created\n", data.eglDisplay, data.eglSurface, data.eglContext);
+  {
+    std::unique_lock<std::recursive_mutex> {contextsMutex};
+    backgroundContexts[currentThreadId] = data;
+  }
 
   return PX_OK;
 }
   
-void pxMakeEglCurrent()
+void pxMakeEglCurrent(contextData data)
 {
-  if (!eglContextIsCurrent)
+  if (!data.isCurrent)
   {
-    prevEglDisplay = eglGetCurrentDisplay();
-    prevEglDrawSurface = eglGetCurrentSurface(EGL_DRAW);
-    prevEglReadSurface = eglGetCurrentSurface(EGL_READ);
-    prevEglContext = eglGetCurrentContext();
-    bool success = eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
+    data.prevEglDisplay = eglGetCurrentDisplay();
+    data.prevEglDrawSurface = eglGetCurrentSurface(EGL_DRAW);
+    data.prevEglReadSurface = eglGetCurrentSurface(EGL_READ);
+    data.prevEglContext = eglGetCurrentContext();
+    bool success = eglMakeCurrent(data.eglDisplay, data.eglSurface, data.eglSurface, data.eglContext);
     if (!success)
     {
       int eglError = eglGetError();
       rtLogWarn("make current error: %d\n", eglError);
+      return;
     }
 
-    eglContextIsCurrent = true;
+    data.isCurrent = true;
+    {
+      std::unique_lock<std::recursive_mutex> {contextsMutex};
+      backgroundContexts[rtThreadGetCurrentId()] = data;
+    }
   }
 }
 
 void pxDoneEglCurrent()
 {
-  if (eglContextIsCurrent)
+  contextData data;
   {
-    eglMakeCurrent(prevEglDisplay, prevEglDrawSurface, prevEglReadSurface, prevEglContext);
-    eglContextIsCurrent = false;
+    std::unique_lock<std::recursive_mutex> {contextsMutex};
+    data = backgroundContexts[rtThreadGetCurrentId()];
+  }
+  if (data.isCurrent)
+  {
+    eglMakeCurrent(data.prevEglDisplay, data.prevEglDrawSurface, data.prevEglReadSurface, data.prevEglContext);
+    data.isCurrent = false;
+    {
+      std::unique_lock<std::recursive_mutex> {contextsMutex};
+      backgroundContexts[rtThreadGetCurrentId()] = data;
+    }
   }
 }
 
 void pxDeleteEglContext()
 {
   pxDoneEglCurrent();
-  if (eglContextCreated)
+  rtThreadId currentThreadId = rtThreadGetCurrentId();
+  contextData data;
   {
-    rtLogInfo("deleting pxscene context\n");
-    eglDestroySurface(eglDisplay, eglSurface);
-    eglDestroyContext(eglDisplay, eglContext);
-    eglDisplay = 0;
-    eglSurface = 0;
-    eglContext = 0;
-    prevEglDisplay = 0;
-    prevEglDrawSurface = 0;
-    prevEglReadSurface = 0;
-    prevEglContext = 0;
-    eglContextCreated = false;
+    std::unique_lock<std::recursive_mutex> {contextsMutex};
+    if ( backgroundContexts.find(currentThreadId) != backgroundContexts.end())
+    {
+      return;
+    }
+    else
+    {
+      data = backgroundContexts[currentThreadId];
+      backgroundContexts.erase(currentThreadId);
+    }
   }
+  rtLogInfo("deleting pxscene context\n");
+  eglDestroySurface(data.eglDisplay, data.eglSurface);
+  eglDestroyContext(data.eglDisplay, data.eglContext);
+  data.eglDisplay = 0;
+  data.eglSurface = 0;
+  data.eglContext = 0;
+  data.prevEglDisplay = 0;
+  data.prevEglDrawSurface = 0;
+  data.prevEglReadSurface = 0;
+  data.prevEglContext = 0;
 }
 
 pxError makeInternalGLContextCurrent(bool current)
 {
   if (current)
   {
-    if (!eglContextCreated)
+    rtThreadId currentThreadId = rtThreadGetCurrentId();
+    bool contextExists = false;
+    contextData data;
+    {
+      std::unique_lock<std::recursive_mutex> {contextsMutex};
+      if ( backgroundContexts.find(currentThreadId) != backgroundContexts.end())
+      {
+        contextExists = true;
+        data = backgroundContexts[rtThreadGetCurrentId()];
+      }
+    }
+    if (!contextExists)
     {
       pxCreateEglContext();
-      pxMakeEglCurrent();
+      {
+        std::unique_lock<std::recursive_mutex> {contextsMutex};
+        if ( backgroundContexts.find(currentThreadId) != backgroundContexts.end())
+        {
+          data = backgroundContexts[rtThreadGetCurrentId()];
+        }
+      }
+      pxMakeEglCurrent(data);
 
       glEnable(GL_BLEND);
       glClearColor(0, 0, 0, 0);
@@ -227,12 +290,44 @@ pxError makeInternalGLContextCurrent(bool current)
     }
     else
     {
-      pxMakeEglCurrent();
+      pxMakeEglCurrent(data);
     }
   }
   else
   {
     pxDoneEglCurrent();
+  }
+  return PX_OK;
+}
+
+pxError requestContextOwnership()
+{
+  bool success = false;
+  {
+    std::unique_lock<std::recursive_mutex> {contextsMutex};
+    success = eglMakeCurrent(defaultEglDisplay, defaultEglDrawSurface, defaultEglReadSurface, defaultEglContext);
+  }
+  if (!success)
+  {
+    int eglError = eglGetError();
+    rtLogWarn("request context ownership failed: %d\n", eglError);
+    return PX_FAIL;
+  }
+  return PX_OK;
+}
+
+pxError releaseContextOwnership()
+{
+  bool success = false;
+  {
+    std::unique_lock<std::recursive_mutex> {contextsMutex};
+    success = eglMakeCurrent(defaultEglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+  }
+  if (!success)
+  {
+    int eglError = eglGetError();
+    rtLogWarn("release context ownership failed: %d\n", eglError);
+    return PX_FAIL;
   }
   return PX_OK;
 }
