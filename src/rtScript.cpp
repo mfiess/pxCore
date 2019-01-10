@@ -38,11 +38,18 @@
 
 
 #ifdef __APPLE__
+#if defined(USE_STD_THREADS)
+#include <thread>
+#include <mutex>
+static std::mutex sSceneLock;
+static std::thread::id sCurrentSceneThread;
+#else
 static pthread_mutex_t sSceneLock = PTHREAD_RECURSIVE_MUTEX_INITIALIZER; //PTHREAD_MUTEX_INITIALIZER;
 static pthread_t sCurrentSceneThread;
 #ifndef RUNINMAIN
 static pthread_mutex_t sObjectMapMutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER; //PTHREAD_MUTEX_INITIALIZER;
 #endif //!RUNINMAIN
+#endif //__APPLE__
 #elif defined(USE_STD_THREADS)
 #include <thread>
 #include <mutex>
