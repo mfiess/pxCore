@@ -9,8 +9,8 @@ externalDir=../external
 
 externalLibs=$externalDir/png/.libs/:$externalDir/jpg/.libs/:$externalDir/curl/lib/.libs/:$externalDir/ft/objs/.libs/:$externalDir/zlib:$externalDir/westeros/external/install/lib/:$externalDir/libjpeg-turbo/.libs/:rpc/
 
-PathD=$externalLibs:$externalDir/libnode-v6.9.0/out/Debug/obj.target
-PathR=$externalLibs:$externalDir/libnode-v6.9.0/out/Release/obj.target
+PathD=$externalLibs:$externalDir/node/out/Debug/obj.target
+PathR=$externalLibs:$externalDir/node/out/Release/obj.target
 
 export LD_LIBRARY_PATH=$PathR
 
