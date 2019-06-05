@@ -8,6 +8,7 @@ option(BUILD_PXBENCHMARK "BUILD_PXBENCHMARK" OFF)
 option(BUILD_WITH_GIF "BUILD_WITH_GIF" OFF)
 
 # foo comment
+# foo commit 2
 
 option(PREFER_SYSTEM_LIBRARIES "Prefer to use system libraries over bundled." "OFF")
     # Fine selection of which external node package to pick-up, if multiple are installed on the system
