@@ -287,7 +287,14 @@ then
   ./dukluv/build.sh
 fi
 
-#--------
+#-------- spark-webgl
+export NODE_PATH=$NODE_PATH:`pwd`/../src/node_modules
+export PATH=`pwd`/node/deps/npm/bin/node-gyp-bin/:`pwd`/node/out/Release:$PATH
+cd spark-webgl
+node-gyp rebuild
+cd ..
+
+#-------- 
 
 if [ ! -e sqlite/.libs/libsqlite3.a ]
 then

@@ -100,6 +100,7 @@ cd ..
 REM --------- GIF
 cd giflib-5.1.9
 git apply -p1 < ../giflib-5.1.9-windows.diff
+
 cd ..
 
 REM --------- SQLITE
