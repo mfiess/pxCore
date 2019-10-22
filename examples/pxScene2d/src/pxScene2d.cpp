@@ -3738,11 +3738,7 @@ void pxScriptView::endDrawing()
 {
   if (mDrawing)
   {
-    //TODO - revisit..  the call to glViewport will ensure that all nested contexts are updated as expected.  this is a workaround to fix
-    //  a lower level graphics problem that is happening on some devices. this line shouldn't be needed, but it's a cheap and low risk
-    //  solution to solving the problem for now
     glViewport(0,0,1,1);
-    //end TODO
     glFlush();
     context.setFramebuffer(previousSurface);
     mSharedContext->makeCurrent(false);
