@@ -20,6 +20,7 @@
 #include "pxText.h"
 #include "pxTextCanvas.h"
 #include "pxContext.h"
+#include "pxWebGL.h"
 
 #define CLAMP(_x, _min, _max) ( (_x) < (_min) ? (_min) : (_x) > (_max) ? (_max) : (_x) )
 extern pxContext context;
@@ -500,6 +501,56 @@ void pxTextCanvas::renderTextLine(const pxTextLine& textLine)
     }
 }
 
+rtError pxTextCanvas::setText(const char* s)
+{
+  if( !mText.compare(s)){
+    rtLogDebug("pxText.setText setting to same value %s and %s\n", mText.cString(), s);
+    return RT_OK;
+  }
+  mText = s;
+  fillText(mText, 0, mPixelSize);
+  if( getFontResource() != NULL && getFontResource()->isFontLoaded())
+  {
+    getFontResource()->measureTextInternal(s, mPixelSize, 1.0, 1.0, mw, mh);
+  }
+  return RT_OK;
+}
+
+rtError pxTextCanvas::paint(float x, float y)
+{
+#ifdef PXSCENE_FONT_ATLAS
+    if (mDirty)
+    {
+        mQuadsVector.clear();
+        renderText(true);
+        mDirty = false;
+    }
+
+    pxWebgl::preserveState();
+
+    context.pushState();
+    pxMatrix4f m;
+    context.setMatrix(m);
+    context.setAlpha(1.0);
+
+    //ensure the viewport and size are correctly set
+    int w = 0, h = 0;
+    context.getSize(w, h);
+    context.setSize(w, h);
+
+    for (std::vector<pxTexturedQuads>::iterator it = mQuadsVector.begin() ; it != mQuadsVector.end(); ++it)
+    {
+        (*it).draw(x, y, mTextColor);
+    }
+    context.popState();
+
+    pxWebgl::restoreState();
+#else
+    rtLogError("pxTextCanvas::drawing without FONT ATLAS is not supported yet.");
+#endif
+    return RT_OK;
+}
+
 void pxTextCanvas::draw()
 {
 #ifdef PXSCENE_FONT_ATLAS
@@ -640,3 +691,4 @@ rtDefineMethod(pxTextCanvas, fillText);
 rtDefineMethod(pxTextCanvas, clear);
 rtDefineMethod(pxTextCanvas, fillRect);
 rtDefineMethod(pxTextCanvas, translate);
+rtDefineMethod(pxTextCanvas, paint);
