@@ -649,7 +649,13 @@ pxScene2d::pxScene2d(bool top, pxScriptView* scriptView)
   rtObjectRef sparkGlCapabilitiesrk = new rtMapObject;
   sparkGlCapabilitiesrk.set("fontatlas", 1);
   rtValue enableSparkGlFontAtlas;
-  if (RT_OK == rtSettings::instance()->value("enableSparkGlFontAtlas", enableSparkGlFontAtlas))
+  char const* sparkGlFontAtlasEnv = getenv("SPARK_ENABLE_SPARKGL_FONT_ATLAS");
+  if (sparkGlFontAtlasEnv && (strcmp(sparkGlFontAtlasEnv,"0") == 0))
+  {
+    rtLogWarn("disabling SparkGL font atlas rendering capability");
+    sparkGlCapabilitiesrk.set("fontatlas", 0);
+  }
+  else if (RT_OK == rtSettings::instance()->value("enableSparkGlFontAtlas", enableSparkGlFontAtlas))
   {
     if (enableSparkGlFontAtlas.toString().compare("false") == 0)
     {
