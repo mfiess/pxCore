@@ -501,7 +501,7 @@ void pxTextCanvas::renderTextLine(const pxTextLine& textLine)
     }
 }
 
-rtError pxTextCanvas::paint(float x, float y, uint32_t color)
+rtError pxTextCanvas::paint(float x, float y, uint32_t color, bool translateOnly)
 {
 #ifdef PXSCENE_FONT_ATLAS
     if (mDirty)
@@ -515,8 +515,22 @@ rtError pxTextCanvas::paint(float x, float y, uint32_t color)
 
     context.pushState();
     pxMatrix4f m;
+    if (translateOnly)
+    {
+        m.translate(mx+x, my+y);
+    }
+    else
+    {
+      float tempX = mx;
+      float tempY = my;
+      mx += x;
+      my += y;
+      applyMatrix(m);
+      mx = tempX;
+      my = tempY;
+    }
     context.setMatrix(m);
-    context.setAlpha(1.0);
+    context.setAlpha(ma);
 
     //ensure the viewport and size are correctly set
     int w = 0, h = 0;
@@ -539,7 +553,7 @@ rtError pxTextCanvas::paint(float x, float y, uint32_t color)
 
     for (std::vector<pxTexturedQuads>::iterator it = mQuadsVector.begin() ; it != mQuadsVector.end(); ++it)
     {
-        (*it).draw(x, y, textColor);
+        (*it).draw(0, 0, textColor);
     }
     context.popState();
 
@@ -690,4 +704,3 @@ rtDefineMethod(pxTextCanvas, fillText);
 rtDefineMethod(pxTextCanvas, clear);
 rtDefineMethod(pxTextCanvas, fillRect);
 rtDefineMethod(pxTextCanvas, translate);
-rtDefineMethod(pxTextCanvas, paint);

@@ -169,8 +169,7 @@ public:
     rtMethod2ArgAndNoReturn("translate", translate, int32_t, int32_t);
     rtError translate(int32_t x, int32_t y);
 
-    rtMethod3ArgAndNoReturn("paint", paint, float, float, uint32_t);
-    rtError paint(float x, float y, uint32_t color);
+    virtual rtError paint(float x, float y, uint32_t color, bool translateOnly) override;
 
 protected:
     pxTextCanvasMeasurements* getMeasurements() { return (pxTextCanvasMeasurements*)measurements.getPtr();}

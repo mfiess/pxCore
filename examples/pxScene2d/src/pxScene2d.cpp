@@ -563,7 +563,7 @@ pxScene2d::pxScene2d(bool top, pxScriptView* scriptView)
   // capabilities.events.drag_n_drop    = 2   // additional Drag'n'Drop events
   //
   // capabilities.video.player         = 1
-  // capabilities.sparkgl.nativetext    = 1
+  // capabilities.sparkgl.nativedrawing    = 1
 
   mCapabilityVersions = new rtMapObject;
 
@@ -646,25 +646,25 @@ pxScene2d::pxScene2d(bool top, pxScriptView* scriptView)
   mCapabilityVersions.set("video", videoCapabilities);
 #endif //ENABLE_SPARK_VIDEO
 
-  rtObjectRef sparkGlCapabilitiesrk = new rtMapObject;
-  sparkGlCapabilitiesrk.set("nativetext", 1);
-  rtValue enableSparkGlNativeText;
-  char const* sparkGlNativeTextEnv = getenv("SPARK_ENABLE_SPARKGL_NATIVE_TEXT");
-  if (sparkGlNativeTextEnv && (strcmp(sparkGlNativeTextEnv,"0") == 0))
+  rtObjectRef sparkGlCapabilities = new rtMapObject;
+  sparkGlCapabilities.set("nativedrawing", 1);
+  rtValue enableSparkGlNativeDrawing;
+  char const* sparkGlNativeDrawingEnv = getenv("SPARK_ENABLE_SPARKGL_NATIVE_DRAWING");
+  if (sparkGlNativeDrawingEnv && (strcmp(sparkGlNativeDrawingEnv,"0") == 0))
   {
-    rtLogWarn("disabling SparkGL native text rendering capability");
-    sparkGlCapabilitiesrk.set("nativetext", 0);
+    rtLogWarn("disabling SparkGL native rendering capability");
+    sparkGlCapabilities.set("nativedrawing", 0);
   }
-  else if (RT_OK == rtSettings::instance()->value("enableSparkGlNativeText", enableSparkGlNativeText))
+  else if (RT_OK == rtSettings::instance()->value("enableSparkGlNativeDrawing", enableSparkGlNativeDrawing))
   {
-    if (enableSparkGlNativeText.toString().compare("false") == 0)
+    if (enableSparkGlNativeDrawing.toString().compare("false") == 0)
     {
-      //disable SparkGL native text support if setting disables it
-      rtLogWarn("disabling SparkGL native text rendering");
-      sparkGlCapabilitiesrk.set("nativetext", 0);
+      //disable SparkGL native drawing support if setting disables it
+      rtLogWarn("disabling SparkGL native rendering");
+      sparkGlCapabilities.set("nativedrawing", 0);
     }
   }
-  mCapabilityVersions.set("sparkgl", sparkGlCapabilitiesrk);
+  mCapabilityVersions.set("sparkgl", sparkGlCapabilities);
 
   //////////////////////////////////////////////////////
 }
