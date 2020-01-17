@@ -19,6 +19,8 @@
 #include "pxConstants.h"
 #include "pxText.h"
 #include "pxTextCanvas.h"
+#include "pxContext.h"
+#include "pxWebGL.h"
 
 #define CLAMP(_x, _min, _max) ( (_x) < (_min) ? (_min) : (_x) > (_max) ? (_max) : (_x) )
 extern pxContext context;
@@ -512,6 +514,55 @@ void pxTextCanvas::renderTextLine(const pxTextLine& textLine)
     }
 }
 
+rtError pxTextCanvas::paint(float x, float y, uint32_t color)
+{
+#ifdef PXSCENE_FONT_ATLAS
+    if (mDirty)
+    {
+        mQuadsVector.clear();
+        renderText(true);
+        mDirty = false;
+    }
+
+    pxWebgl::beginNativeSparkRendering();
+
+    context.pushState();
+    pxMatrix4f m;
+    context.setMatrix(m);
+    context.setAlpha(1.0);
+
+    //ensure the viewport and size are correctly set
+    int w = 0, h = 0;
+    context.getSize(w, h);
+    context.setSize(w, h);
+
+    float textColor[4];
+    memcpy(textColor, mTextColor, sizeof(textColor));
+    if (color != 0xFFFFFFFF)
+    {
+        if (mColorMode == "ARGB")
+        {
+            color = argb2rgba(color);
+        }
+        textColor[PX_RED  ] *= (float)((color>>24) & 0xff) / 255.0f;
+        textColor[PX_GREEN] *= (float)((color>>16) & 0xff) / 255.0f;
+        textColor[PX_BLUE ] *= (float)((color>> 8) & 0xff) / 255.0f;
+        textColor[PX_ALPHA] *= (float)((color>> 0) & 0xff) / 255.0f;
+    }
+
+    for (std::vector<pxTexturedQuads>::iterator it = mQuadsVector.begin() ; it != mQuadsVector.end(); ++it)
+    {
+        (*it).draw(x, y, textColor);
+    }
+    context.popState();
+
+    pxWebgl::endNativeSparkRendering();
+#else
+    rtLogError("pxTextCanvas::drawing without FONT ATLAS is not supported yet.");
+#endif
+    return RT_OK;
+}
+
 void pxTextCanvas::draw()
 {
 #ifdef PXSCENE_FONT_ATLAS
@@ -704,6 +755,7 @@ rtDefineMethod(pxTextCanvas, fillText);
 rtDefineMethod(pxTextCanvas, clear);
 rtDefineMethod(pxTextCanvas, fillRect);
 rtDefineMethod(pxTextCanvas, translate);
+rtDefineMethod(pxTextCanvas, paint);
 
 rtDefineProperty(pxTextCanvas, shadowColor);
 rtDefineProperty(pxTextCanvas, shadowOffsetX);
