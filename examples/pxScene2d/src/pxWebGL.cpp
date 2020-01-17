@@ -914,7 +914,7 @@ rtError pxWebgl::DeleteProgram(uint32_t program)
   return RT_OK;
 }
 
-void pxWebgl::preserveState()
+void pxWebgl::beginNativeSparkRendering()
 {
   for (std::vector<uint32_t>::iterator it = webGlContext.webGlStates.begin() ; it != webGlContext.webGlStates.end(); ++it)
   {
@@ -949,7 +949,7 @@ void pxWebgl::preserveState()
   glEnable(GL_BLEND);
 }
 
-void pxWebgl::restoreState()
+void pxWebgl::endNativeSparkRendering()
 {
   glActiveTexture(webGlContext.activeTexture);
   for (std::vector<uint32_t>::iterator it = webGlContext.webGlStates.begin() ; it != webGlContext.webGlStates.end(); ++it)

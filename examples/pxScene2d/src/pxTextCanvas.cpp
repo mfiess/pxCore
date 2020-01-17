@@ -501,22 +501,7 @@ void pxTextCanvas::renderTextLine(const pxTextLine& textLine)
     }
 }
 
-rtError pxTextCanvas::setText(const char* s)
-{
-  if( !mText.compare(s)){
-    rtLogDebug("pxText.setText setting to same value %s and %s\n", mText.cString(), s);
-    return RT_OK;
-  }
-  mText = s;
-  fillText(mText, 0, mPixelSize);
-  if( getFontResource() != NULL && getFontResource()->isFontLoaded())
-  {
-    getFontResource()->measureTextInternal(s, mPixelSize, 1.0, 1.0, mw, mh);
-  }
-  return RT_OK;
-}
-
-rtError pxTextCanvas::paint(float x, float y)
+rtError pxTextCanvas::paint(float x, float y, uint32_t color)
 {
 #ifdef PXSCENE_FONT_ATLAS
     if (mDirty)
@@ -526,7 +511,7 @@ rtError pxTextCanvas::paint(float x, float y)
         mDirty = false;
     }
 
-    pxWebgl::preserveState();
+    pxWebgl::beginNativeSparkRendering();
 
     context.pushState();
     pxMatrix4f m;
@@ -538,13 +523,27 @@ rtError pxTextCanvas::paint(float x, float y)
     context.getSize(w, h);
     context.setSize(w, h);
 
+    float textColor[4];
+    memcpy(textColor, mTextColor, sizeof(textColor));
+    if (color != 0xFFFFFFFF)
+    {
+        if (mColorMode == "ARGB")
+        {
+            color = argb2rgba(color);
+        }
+        textColor[PX_RED  ] *= (float)((color>>24) & 0xff) / 255.0f;
+        textColor[PX_GREEN] *= (float)((color>>16) & 0xff) / 255.0f;
+        textColor[PX_BLUE ] *= (float)((color>> 8) & 0xff) / 255.0f;
+        textColor[PX_ALPHA] *= (float)((color>> 0) & 0xff) / 255.0f;
+    }
+
     for (std::vector<pxTexturedQuads>::iterator it = mQuadsVector.begin() ; it != mQuadsVector.end(); ++it)
     {
-        (*it).draw(x, y, mTextColor);
+        (*it).draw(x, y, textColor);
     }
     context.popState();
 
-    pxWebgl::restoreState();
+    pxWebgl::endNativeSparkRendering();
 #else
     rtLogError("pxTextCanvas::drawing without FONT ATLAS is not supported yet.");
 #endif

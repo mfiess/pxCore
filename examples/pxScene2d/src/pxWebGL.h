@@ -136,8 +136,8 @@ public:
    rtError DeleteBuffer(uint32_t buffer);
    rtError DeleteProgram(uint32_t program);
 
-   static void preserveState();
-   static void restoreState();
+   static void beginNativeSparkRendering();
+   static void endNativeSparkRendering();
 
 private:
 

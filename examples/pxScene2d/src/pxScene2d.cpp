@@ -563,7 +563,7 @@ pxScene2d::pxScene2d(bool top, pxScriptView* scriptView)
   // capabilities.events.drag_n_drop    = 2   // additional Drag'n'Drop events
   //
   // capabilities.video.player         = 1
-  // capabilities.sparkgl.fontatlas    = 1
+  // capabilities.sparkgl.nativetext    = 1
 
   mCapabilityVersions = new rtMapObject;
 
@@ -647,21 +647,21 @@ pxScene2d::pxScene2d(bool top, pxScriptView* scriptView)
 #endif //ENABLE_SPARK_VIDEO
 
   rtObjectRef sparkGlCapabilitiesrk = new rtMapObject;
-  sparkGlCapabilitiesrk.set("fontatlas", 1);
-  rtValue enableSparkGlFontAtlas;
-  char const* sparkGlFontAtlasEnv = getenv("SPARK_ENABLE_SPARKGL_FONT_ATLAS");
-  if (sparkGlFontAtlasEnv && (strcmp(sparkGlFontAtlasEnv,"0") == 0))
+  sparkGlCapabilitiesrk.set("nativetext", 1);
+  rtValue enableSparkGlNativeText;
+  char const* sparkGlNativeTextEnv = getenv("SPARK_ENABLE_SPARKGL_NATIVE_TEXT");
+  if (sparkGlNativeTextEnv && (strcmp(sparkGlNativeTextEnv,"0") == 0))
   {
-    rtLogWarn("disabling SparkGL font atlas rendering capability");
-    sparkGlCapabilitiesrk.set("fontatlas", 0);
+    rtLogWarn("disabling SparkGL native text rendering capability");
+    sparkGlCapabilitiesrk.set("nativetext", 0);
   }
-  else if (RT_OK == rtSettings::instance()->value("enableSparkGlFontAtlas", enableSparkGlFontAtlas))
+  else if (RT_OK == rtSettings::instance()->value("enableSparkGlNativeText", enableSparkGlNativeText))
   {
-    if (enableSparkGlFontAtlas.toString().compare("false") == 0)
+    if (enableSparkGlNativeText.toString().compare("false") == 0)
     {
-      //disable SparkGL font atlas support if setting disables it
-      rtLogWarn("disabling SparkGL font atlas rendering");
-      sparkGlCapabilitiesrk.set("fontatlas", 0);
+      //disable SparkGL native text support if setting disables it
+      rtLogWarn("disabling SparkGL native text rendering");
+      sparkGlCapabilitiesrk.set("nativetext", 0);
     }
   }
   mCapabilityVersions.set("sparkgl", sparkGlCapabilitiesrk);
