@@ -511,8 +511,6 @@ rtError pxTextCanvas::paint(float x, float y, uint32_t color, bool translateOnly
         mDirty = false;
     }
 
-    pxWebgl::beginNativeSparkRendering();
-
     context.pushState();
     pxMatrix4f m;
     if (translateOnly)
@@ -556,8 +554,6 @@ rtError pxTextCanvas::paint(float x, float y, uint32_t color, bool translateOnly
         (*it).draw(0, 0, textColor);
     }
     context.popState();
-
-    pxWebgl::endNativeSparkRendering();
 #else
     rtLogError("pxTextCanvas::drawing without FONT ATLAS is not supported yet.");
 #endif
